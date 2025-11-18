@@ -12,24 +12,29 @@ def Number_Of_Fasteners(w, D_2, material, N_min):
 
     # defining constraints
 
-    # edge constraints have a range
-    if material == " 1 "
+    # edge constraints are given as a range in 4.4
+    if material == " 1 ":
         edge_center_min = [2, 3]
-    elif material == " 2 "
+    elif material == " 2 ":
         edge_center_min = [4, 5]
     
+    # fastener spacing always the same
     center_center_min = 1.5
 
-    for e in edge_center_min:
-        
-        N_max = (w-2*edge_center_min*D_2)//(center_center_min*D_2)
-    print(N_max, (w-2*edge_center_min*D_2)/(center_center_min*D_2) )
+    N_max = [] # Number of fasteners is a range, given the edge distance factor is also a range
+    w_new = [] # Same for new height (calculated with minimum Number of fasteners)
+    for e in range(0, len(edge_center_min)):
 
-    # if there is a minimum N, recalculate w to fit N fasteners with D_2 diameter
-    if N_max < N_min:
-        # 
+        something = 1 + (w-2*edge_center_min[e]*D_2)/(center_center_min*D_2) # unrounded N_max
+        N_max.append(1 + (w-2*edge_center_min[e]*D_2)//(center_center_min*D_2)) 
+        w_new.append((N_min-1) * center_center_min + 2 * edge_center_min[e])
+
+        print("For chosen edge margin:", edge_center_min[e], "Max N, given w:", edge_center_min[e], N_max[e], something, "New w, given minimum N:", N_min, w_new[e])
     
-    print("N_max, w:", N_max, w, "w_new given N")
+    return N_max, w_new
 
 
-    return #max N, margin for given D_2 that still meets constraints
+# test
+
+print(Number_Of_Fasteners(10, 2, " 1 ", 2))
+
