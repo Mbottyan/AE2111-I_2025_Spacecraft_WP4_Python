@@ -32,6 +32,24 @@ class Fastener:
     def provide_z_weighted_average(self):
         self.A=(math.pi)*(self.Diameter*0.5)**2
         return (self.A*self.z_coord), (self.A)
+    
+
+
+
+
+    def find_bearinhg_stresses (self):
+        x_forces=(self.fcgx[0]+self.fmom[0])
+        z_forces=(self.fcgz[1]+self.fmom[1])
+        self.Pi=(x_forces,z_forces)
+        self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
+        self.bearing_stress=
+        return (self.Pi, self.Pi_magnitude)
+    
+    
+
+
+
+
         
 
     
@@ -58,3 +76,5 @@ def cg_location():
 
 (cg_location())
 #This produces the coordinates of the centre of gravity in (xcg, zcg) format
+
+
