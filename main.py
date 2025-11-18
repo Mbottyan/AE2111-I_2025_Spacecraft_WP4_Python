@@ -25,10 +25,11 @@ class Fastener:
         self.Diameter=float(Diameter)
         self.x_coord=float(x_coord)
         self.z_coord=float(z_coord)
+        self.force_vectors=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener
     # give the coordinates weighted and areas of fastener of cg calculation
     def provide_x_weighted_average(self):
-        self.A=(math.pi)*(self.Diameter*0.5)**2
-        return (self.A*self.x_coord), (self.A)
+        self.area=(math.pi)*(self.Diameter*0.5)**2
+        return (self.area*self.x_coord), (self.area)
     def provide_z_weighted_average(self):
         return (self.area*self.z_coord), (self.area)
 
