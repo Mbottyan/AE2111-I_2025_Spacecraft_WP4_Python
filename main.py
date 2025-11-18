@@ -32,6 +32,13 @@ class Fastener:
         return (self.area*self.x_coord), (self.area)
     def provide_z_weighted_average(self):
         return (self.area*self.z_coord), (self.area)
+    def find_bearinhg_stresses (self):
+        x_forces=(self.fcgx[0]+self.fmom[0])
+        z_forces=(self.fcgz[1]+self.fmom[1])
+        self.Pi=(x_forces,z_forces)
+        self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
+        self.bearing_stress=0
+        return (self.Pi, self.Pi_magnitude)
 
 #Calculate the cg location of the fastener pattern  
 def cg_location():
