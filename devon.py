@@ -28,3 +28,5 @@ friction_from_that = static_friction_coefficient * max_tension_bolt
 
 print(friction_from_that)
 print(mx_maybe)
+
+#I don’t enjoy computer jokes. Not one bit.
