@@ -32,6 +32,7 @@ Fasteners=[] #create list for all fastener instances
 #Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
 
+#<<sasfdsdafdsafdsafds
 
 def Number_Of_Fasteners(w, D_2, material, N_min):
     # x-z plane defined same as in 4.1
