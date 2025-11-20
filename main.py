@@ -40,8 +40,8 @@ def Number_Of_Fasteners(w, D_2, material, N_min):
     print("Max N, given w:",N_max,",", edge_spacing,",", "New w, given minimum N:", w_new, N_min)
     
     return N_max, edge_spacing, center_center_min, w_new, N_min
+    #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
 
+# test case for Number_Of_Fastners function
+# print(Number_Of_Fasteners(15, 2, " 1 ", 2))
 
-# test
-
-print(Number_Of_Fasteners(15, 2, " 1 ", 2))
