@@ -17,10 +17,6 @@ My = 0 #Nm
 Mz = 0 #Nm
 t2=0.005 #m
 
-#Translate froces into the cg of the fastener pattern
-Fcgx = Fx
-Fcgz = Fz
-Mcgy = My + (Fz*cg_location()[0]) - (Fx*cg_location()[1])
 
 
 def Number_Of_Fasteners(w, D_2, material, N_min):
@@ -103,6 +99,12 @@ Fasteners=[] #create list for all fastener instances
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
 for i in range(4):
     Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
+
+
+#Translate froces into the cg of the fastener pattern
+Fcgx = Fx
+Fcgz = Fz
+Mcgy = My + (Fz*cg_location()[0]) - (Fx*cg_location()[1])
 
 #Assign forces to each fastener based on the formulas provided in 4.5
 def assign_fastener_forces():
