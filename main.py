@@ -40,7 +40,7 @@ class Fastener:
         self.Diameter=float(Diameter)
         self.x_coord=float(x_coord)
         self.z_coord=float(z_coord)
-        self.force_vectors=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener
+        self.force_vectors=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (xforces, zforces, momentforces)
     # give the coordinates weighted and areas of fastener of cg calculation
     def provide_x_weighted_average(self):
         self.area=(math.pi)*(self.Diameter*0.5)**2
@@ -49,8 +49,8 @@ class Fastener:
         return (self.area*self.z_coord), (self.area)
     def find_bearing_stresses (self):
         #calculate magnitude of z and x component forces, calculate the stress.
-        x_forces=(self.fcgx[0]+self.fmom[0])
-        z_forces=(self.fcgz[1]+self.fmom[1])
+        x_forces=(self.force_vectors[0][0]+self.force_vectors[1][0]+self.force_vectors[2][0])
+        z_forces=(self.force_vectors[0][2]+self.force_vectors[1][2]+self.force_vectors[2][2])
         self.Pi=(x_forces,z_forces)
         self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
         self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
