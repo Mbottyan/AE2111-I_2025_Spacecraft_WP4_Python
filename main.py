@@ -3,20 +3,34 @@ import math
 import random
 
 
+#Functions list (able to be called whenever you need these values in later code):
+
+    # - cg_location() - Will give you a tuple with the (x, z) coordinates of the centre of gravity of the fasteners, you can index these too!
 
 
 
 
 
 #Constant forces from FBD
-Fx = 10 #N
-Fy = 20 #N
-Fz = 30 #N
-Mx = 0  #Nm
-My = 0 #Nm
-Mz = 0 #Nm
-t2=0.005 #m
+Fx = 10 #N (Put in the real value here)
+Fy = 20 #N (Put in the real value here)
+Fz = 30 #N (Put in the real value here)
+Mx = 0  #Nm (Put in the real value here)
+My = 0 #Nm (Put in the real value here)
+Mz = 0 #Nm (Put in the real value here)
+w = 0 #m  (Put in the real value here)
+h = 0 #m  (Put in the real value here)
+t1 = 0 #m  (Put in the real value here)
+t2=0.005 #m (Put in the real value here)
+t3 = 0 #m  (Put in the real value here)
+D_1 = 0 #m  (Put in the real value here)
+D_2 = 0 #m  (Put in the real value here)
+P=0 #N Make a function to find P below and use it to give this variable the correct value
 
+Fasteners=[] #create list for all fastener instances
+# When ready with fastener dimensions and coordinates, for each one append manually:
+#Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
+#This will create a Fastener instance for each fastener, which will be used in the cg calculation
 
 
 
@@ -33,7 +47,7 @@ class Fastener:
         return (self.area*self.x_coord), (self.area)
     def provide_z_weighted_average(self):
         return (self.area*self.z_coord), (self.area)
-    def find_bearinhg_stresses (self):
+    def find_bearing_stresses (self):
         #calculate magnitude of z and x component forces, calculate the stress.
         x_forces=(self.fcgx[0]+self.fmom[0])
         z_forces=(self.fcgz[1]+self.fmom[1])
@@ -58,11 +72,9 @@ def cg_location():
         z_den_sum+=(item.provide_z_weighted_average()[1])
     return (x_num_sum/x_den_sum, z_num_sum/z_den_sum)
     
-Fasteners=[] #create list for all fastener instances
-#generate random fasteners, TO BE REPLACED WITH REAL ONES! When ready with fastener dimensions
-# and coordinates, for each one append manually:
-#Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
-#This will create a Fastener instance for each fastener, which will be used in the cg calculation
+
+#generate random fasteners for testing purposes, TO BE REPLACED WITH REAL ONES! 
+
 for i in range(4):
     Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
