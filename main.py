@@ -17,8 +17,46 @@ My = 0 #Nm
 Mz = 0 #Nm
 t2=0.005 #m
 
+#Translate froces into the cg of the fastener pattern
+Fcgx = Fx
+Fcgz = Fz
+Mcgy = My + (Fz*cg_location()[0]) - (Fx*cg_location()[1])
 
 
+def Number_Of_Fasteners(w, D_2, material, N_min):
+    # x-z plane defined same as in 4.1
+
+    # defining constraints
+
+    # edge constraints are given as a range in 4.4
+    if material == " 1 ":
+        edge_center_min = [2, 3]
+    elif material == " 2 ":
+        edge_center_min = [4, 5]
+    
+    # fastener spacing always the same
+    center_center_min = 1.5
+
+    N_max_check = [] # Number of fasteners check
+    for e in range(0, len(edge_center_min)):
+
+        something = 1 + (w-2*edge_center_min[e]*D_2)/(center_center_min*D_2) # unrounded N_max
+        N_m = 1 + (w-2*edge_center_min[e]*D_2)//(center_center_min*D_2)
+        N_max_check.append(N_m)
+    
+        e_test = ( N_m - 1 - w/(center_center_min*D_2) ) * -center_center_min/2 # chooses highest N and its associated edge spacing
+        if e_test > edge_center_min[e]:
+            N_max = max(N_max_check)
+            edge_spacing = e_test
+            #print(edge_spacing, edge_center_min[e], N_max, "1") # for testing
+
+        w_new = (N_min-1) * center_center_min + 2 * min(edge_center_min)
+        #print(e_test, N_max, "2") # for testing
+
+    print("Max N, given w:",N_max,",", edge_spacing,",", "New w, given minimum N:", w_new, N_min)
+    
+    return N_max, edge_spacing, center_center_min, w_new, N_min
+    #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
 
 class Fastener:
     def __init__(self, Diameter, x_coord, z_coord):
@@ -66,11 +104,6 @@ Fasteners=[] #create list for all fastener instances
 for i in range(4):
     Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
-#Translate froces into the cg of the fastener pattern
-Fcgx = Fx
-Fcgz = Fz
-Mcgy = My + (Fz*cg_location()[0]) - (Fx*cg_location()[1])
-
 #Assign forces to each fastener based on the formulas provided in 4.5
 def assign_fastener_forces():
     cg_x, cg_z = cg_location()
@@ -94,41 +127,6 @@ def assign_fastener_forces():
         fastener.force_vectors=(F_inplanex,F_inplanez,moment_force)
 
 assign_fastener_forces()
-
-def Number_Of_Fasteners(w, D_2, material, N_min):
-    # x-z plane defined same as in 4.1
-
-    # defining constraints
-
-    # edge constraints are given as a range in 4.4
-    if material == " 1 ":
-        edge_center_min = [2, 3]
-    elif material == " 2 ":
-        edge_center_min = [4, 5]
-    
-    # fastener spacing always the same
-    center_center_min = 1.5
-
-    N_max_check = [] # Number of fasteners check
-    for e in range(0, len(edge_center_min)):
-
-        something = 1 + (w-2*edge_center_min[e]*D_2)/(center_center_min*D_2) # unrounded N_max
-        N_m = 1 + (w-2*edge_center_min[e]*D_2)//(center_center_min*D_2)
-        N_max_check.append(N_m)
-    
-        e_test = ( N_m - 1 - w/(center_center_min*D_2) ) * -center_center_min/2 # chooses highest N and its associated edge spacing
-        if e_test > edge_center_min[e]:
-            N_max = max(N_max_check)
-            edge_spacing = e_test
-            #print(edge_spacing, edge_center_min[e], N_max, "1") # for testing
-
-        w_new = (N_min-1) * center_center_min + 2 * min(edge_center_min)
-        #print(e_test, N_max, "2") # for testing
-
-    print("Max N, given w:",N_max,",", edge_spacing,",", "New w, given minimum N:", w_new, N_min)
-    
-    return N_max, edge_spacing, center_center_min, w_new, N_min
-    #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
 
 # test case for Number_Of_Fastners function
 # print(Number_Of_Fasteners(15, 2, " 1 ", 2))
