@@ -7,14 +7,13 @@ import random
 
 
 
-
 #Constant forces from FBD
-Fx = 10 #N
-Fy = 20 #N
-Fz = 30 #N
-Mx = 0  #Nm
-My = 0 #Nm
-Mz = 0 #Nm
+Fx = 97.119 #N      #plus or minus
+Fy = 97.119 #N      #plus or minus
+Fz = -425 #N
+Mx = -386.0275  #Nm #88.2132 to -386.0275
+My = 88.2132 #Nm   #plus or minus
+Mz = 1.8166 #Nm     #plus or minus
 t2=0.005 #m
 
 
