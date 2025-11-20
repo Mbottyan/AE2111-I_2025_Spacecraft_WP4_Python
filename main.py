@@ -9,6 +9,7 @@ Fz = 30 #N
 Mx = 0  #Nm
 My = 0 #Nm
 Mz = 0 #Nm
+t2=0.005 #m
 
 #Class with the attributes and methods for each fastener
 class Fastener:
@@ -28,12 +29,16 @@ class Fastener:
         return (self.A*self.z_coord), (self.A)
     
     def find_bearinhg_stresses (self):
+        #calculate magnitude of z and x component forces, calculate the stress.
         x_forces=(self.fcgx[0]+self.fmom[0])
         z_forces=(self.fcgz[1]+self.fmom[1])
         self.Pi=(x_forces,z_forces)
         self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
-        self.bearing_stress=
-        return (self.Pi, self.Pi_magnitude)
+        self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
+        return (self.Pi, self.Pi_magnitude, self.bearing_stress)
+        #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
+        print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
+        #Prints the local wall thickness required
 
     
 Fasteners=[]
