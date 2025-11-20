@@ -21,20 +21,27 @@ def Number_Of_Fasteners(w, D_2, material, N_min):
     # fastener spacing always the same
     center_center_min = 1.5
 
-    N_max = [] # Number of fasteners is a range, given the edge distance factor is also a range
-    w_new = [] # Same for new height (calculated with minimum Number of fasteners)
+    N_max_check = [] # Number of fasteners check
     for e in range(0, len(edge_center_min)):
 
         something = 1 + (w-2*edge_center_min[e]*D_2)/(center_center_min*D_2) # unrounded N_max
-        N_max.append(1 + (w-2*edge_center_min[e]*D_2)//(center_center_min*D_2)) 
-        w_new.append((N_min-1) * center_center_min + 2 * edge_center_min[e])
-
-        print("For chosen edge margin:", edge_center_min[e], "Max N, given w:", edge_center_min[e], N_max[e], something, "New w, given minimum N:", N_min, w_new[e])
+        N_m = 1 + (w-2*edge_center_min[e]*D_2)//(center_center_min*D_2)
+        N_max_check.append(N_m)
     
-    return N_max, w_new
+        e_test = ( N_m - 1 - w/(center_center_min*D_2) ) * -center_center_min/2 # chooses highest N and its associated edge spacing
+        if e_test > edge_center_min[e]:
+            N_max = max(N_max_check)
+            edge_spacing = e_test
+            #print(edge_spacing, edge_center_min[e], N_max, "1") # for testing
+
+        w_new = (N_min-1) * center_center_min + 2 * min(edge_center_min)
+        #print(e_test, N_max, "2") # for testing
+
+    print("Max N, given w:",N_max,",", edge_spacing,",", "New w, given minimum N:", w_new, N_min)
+    
+    return N_max, edge_spacing, center_center_min, w_new, N_min
 
 
 # test
 
-print(Number_Of_Fasteners(10, 2, " 1 ", 2))
-
+print(Number_Of_Fasteners(15, 2, " 1 ", 2))
