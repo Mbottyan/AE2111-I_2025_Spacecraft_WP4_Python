@@ -32,40 +32,6 @@ Fasteners=[] #create list for all fastener instances
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
 
 
-def Number_Of_Fasteners(w, D_2, material, N_min):
-    # x-z plane defined same as in 4.1
-
-    # defining constraints
-
-    # edge constraints are given as a range in 4.4
-    if material == " 1 ":
-        edge_center_min = [2, 3]
-    elif material == " 2 ":
-        edge_center_min = [4, 5]
-    
-    # fastener spacing always the same
-    center_center_min = 1.5
-
-    N_max_check = [] # Number of fasteners check
-    for e in range(0, len(edge_center_min)):
-
-        something = 1 + (w-2*edge_center_min[e]*D_2)/(center_center_min*D_2) # unrounded N_max
-        N_m = 1 + (w-2*edge_center_min[e]*D_2)//(center_center_min*D_2)
-        N_max_check.append(N_m)
-    
-        e_test = ( N_m - 1 - w/(center_center_min*D_2) ) * -center_center_min/2 # chooses highest N and its associated edge spacing
-        if e_test > edge_center_min[e]:
-            N_max = max(N_max_check)
-            edge_spacing = e_test
-            #print(edge_spacing, edge_center_min[e], N_max, "1") # for testing
-
-        w_new = (N_min-1) * center_center_min + 2 * min(edge_center_min)
-        #print(e_test, N_max, "2") # for testing
-
-    print("Max N, given w:",N_max,",", edge_spacing,",", "New w, given minimum N:", w_new, N_min)
-    
-    return N_max, edge_spacing, center_center_min, w_new, N_min
-    #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
 
 class Fastener:
     def __init__(self, Diameter, x_coord, z_coord):
@@ -104,18 +70,83 @@ def cg_location():
         z_num_sum+=(item.provide_z_weighted_average()[0])
         z_den_sum+=(item.provide_z_weighted_average()[1])
     return (x_num_sum/x_den_sum, z_num_sum/z_den_sum)
+
+# calculates max ammount of fasteners that fit on the lug, in case a higher ammount of fasteners (N_min) is needed, it checks and if necessary recalculates the lug height to fit (N_min) ammount
+def Number_Of_Fasteners(w, D_2, material, N_min): 
+    # x-z plane defined same as in 4.1
+
+    # defining constraints
+
+    # edge constraints are given as a range in 4.4
+    if material == " 1 ":
+        edge_center_min = [2, 3]*D_2
+    elif material == " 2 ":
+        edge_center_min = [4, 5]*D_2
     
+    # fastener spacing always the same
+    center_center_min = 1.5*D_2
 
-#generate random fasteners for testing purposes, TO BE REPLACED WITH REAL ONES! 
+    N_max_check = [] # Number of fasteners check
+    for e in range(0, len(edge_center_min)):
 
-for i in range(4):
-    Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
+        N_m = 1 + (w-2*edge_center_min[e])//(center_center_min)
+        N_max_check.append(N_m)
+        
+        e_test = ( w - ( N_m - 1 ) * center_center_min) /2 # chooses highest N and its associated edge spacing
+        if e_test > float(edge_center_min[e]):
+            N_max = int(max(N_max_check))
+            edge_spacing = e_test
+            #print(e_test, edge_center_min, N_max, "1") # for testing
+    
+    if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
+        w = (N_min-1) * center_center_min + 2 * min(edge_center_min)
+
+        # rawdogging it to only give relevant information as output, this line doesnt make sense but trust
+        N_max = N_min
+        edge_spacing = min(edge_center_min)*D_2
+        #print(edge_spacing, N_max, "2") # for testing
+
+    return N_max, edge_spacing, center_center_min, w, D_2
+
+    #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
+
+# test case for Number_Of_Fastners function
+#print(Number_Of_Fasteners(15, 2, " 1 ", 3))
+
+# calculates locations of fastener centroids
+def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1, D_2): # w, h and t1 are
+    # at the time of writing this code atleast the fasteners are symmetrically split across the z axis so this calculates positive x-axis fasteners and negative x-axis ones separately
+    for f in range(N_max):
+        
+        diameter = D_2 # as of writing this, every fastener has same diameter, if this changes, this has to be rewritten
+
+        # first half of fasteners on positive x-axis
+        x = h/2 + t1 + edge_spacing  # only 1 column of fasteners per side so far, if later that seems to not be enough the calculation of x has to change
+        z = f * center_center_min + edge_spacing - w_new/2
+        Fasteners.append(Fastener(diameter, x , z))
+        #print(f, x, z)
+        # second half of fasteners on negative x-axis
+        x = -h/2 - t1 - edge_spacing
+        Fasteners.append(Fastener(diameter, x , z))
+        #print(f, x, z)
+        
+    return Fasteners
+#print(Fasteners_location(4, 3.0, 3.0, 15, 2, 1, 2))
+
+
+#generate random fasteners, TO BE REPLACED WITH REAL ONES! When ready with fastener dimensions
+# and coordinates, for each one append manually:
+#Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
+#This will create a Fastener instance for each fastener, which will be used in the cg calculation
+
+#for i in range(4):
+    #Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
 
 #Translate froces into the cg of the fastener pattern
 Fcgx = Fx
 Fcgz = Fz
-Mcgy = My + (Fz*cg_location()[0]) - (Fx*cg_location()[1])
+Mcgy = My #+ (Fz*cg_location()[0]) - (Fx*cg_location()[1])
 
 #Assign forces to each fastener based on the formulas provided in 4.5
 def assign_fastener_forces():
@@ -141,6 +172,5 @@ def assign_fastener_forces():
 
 assign_fastener_forces()
 
-# test case for Number_Of_Fastners function
-# print(Number_Of_Fasteners(15, 2, " 1 ", 2))
+
 
