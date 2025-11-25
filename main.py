@@ -190,7 +190,23 @@ def assign_fastener_forces():
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
         fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
 
-assign_fastener_forces()
+#material_type = Materials[material_used]['type (metal or composite)']
+
+def Compliance_parts(Modulus,D_outer,D_inner,thickness):
+    Compliance = 4*thickness/(Modulus*math.pi*(D_outer**2 - D_inner**2))
+    return Compliance
+
+def Compliance_fastener(Modulus,Cross_area,length):
+    Compliance = length/(Modulus*Cross_area)
+    return Compliance
+
+Compliance_a = Compliance_parts(Materials['Aluminium']['Modulus'],D_fo,D_fi,t2)
+Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**2*math.pi,t2)
+
+#Calculate force ratio
+def force_ratio(Compliance_a, Compliance_b):
+    force_ratio = Compliance_a/(Compliance_a + Compliance_b)
+    return force_ratio
 
 def thermal1():
     a_c = (Materials[material_used]['Thermal_expansion_coefficient_clamped'])
@@ -225,29 +241,8 @@ def thermal1():
 
     return lst
 
-
+assign_fastener_forces()
 print(thermal1())
-    
-    
-
-
-#material_type = Materials[material_used]['type (metal or composite)']
-
-def Compliance_parts(Modulus,D_outer,D_inner,thickness):
-    Compliance = 4*thickness/(Modulus*math.pi*(D_outer**2 - D_inner**2))
-    return Compliance
-
-def Compliance_fastener(Modulus,Cross_area,length):
-    Compliance = length/(Modulus*Cross_area)
-    return Compliance
-
-Compliance_a = Compliance_parts(Materials['Aluminium']['Modulus'],D_fo,D_fi,t2)
-Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**2*math.pi,t2)
-
-#Calculate force ratio
-def force_ratio(Compliance_a, Compliance_b):
-    force_ratio = Compliance_a/(Compliance_a + Compliance_b)
-    return force_ratio
 
 
 
