@@ -1,4 +1,3 @@
-
 import math
 import random
 
@@ -63,6 +62,31 @@ class Fastener:
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
         #Prints the local wall thickness required
+
+    def check_pull_through_failure(self, D_fo, yield_stress_tension):
+        # Pull-through load (magnitude)
+        P_pull = abs(self.Fy_load)
+        
+        # Check t2 (Lug)
+        area_shear_t2 = math.pi * D_fo * t2
+        self.shear_stress_t2 = P_pull / area_shear_t2 if area_shear_t2 > 0 else 0
+        
+        # Check t3 (Vehicle Wall)
+        area_shear_t3 = math.pi * D_fo * t3
+        self.shear_stress_t3 = P_pull / area_shear_t3 if area_shear_t3 > 0 else 0
+        
+        # Calculate Von Mises Stress for pure shear case (Eq 4.8)
+        # The formula simplifies for pure shear (sigma_x=sigma_y=sigma_z=0) to:
+        # Y = sqrt(3 * tau^2) -> Sigma_vm = sqrt(3) * tau
+        sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
+        sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
+        
+        # Margins of Safety
+        # Compare Von Mises stress to Tension Yield Stress directly
+        self.ms_t2 = (yield_stress_tension / sigma_vm_t2) - 1 if sigma_vm_t2 > 0 else 0
+        self.ms_t3 = (yield_stress_tension / sigma_vm_t3) - 1 if sigma_vm_t3 > 0 else 0
+        
+        return (self.shear_stress_t2, self.ms_t2, self.shear_stress_t3, self.ms_t3)
 
 
 
@@ -185,8 +209,6 @@ def assign_fastener_forces_inplane():
 
 assign_fastener_forces_inplane()
 
-
-#material_type = Materials[material_used]['type (metal or composite)']
 
 
 
