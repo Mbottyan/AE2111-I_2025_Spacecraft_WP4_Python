@@ -162,7 +162,7 @@ Fcgz = Fz
 Mcgy = My #+ (Fz*cg_location()[0]) - (Fx*cg_location()[1])
 
 #Assign forces to each fastener based on the formulas provided in 4.5
-def assign_fastener_forces():
+def assign_fastener_forces_inplane():
     cg_x, cg_z = cg_location()
     nf=len(Fasteners)
     area_r2_sum=sum(
@@ -183,7 +183,7 @@ def assign_fastener_forces():
             moment_force=(0.0,0.0,0.0)
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
 
-assign_fastener_forces()
+assign_fastener_forces_inplane()
 
 
 #material_type = Materials[material_used]['type (metal or composite)']
