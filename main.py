@@ -44,7 +44,7 @@ class Fastener:
         self.x_coord=float(x_coord)
         self.z_coord=float(z_coord)
         self.force_vectors_inplane=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (xforces, zforces, momentforces)
-        self.force_vectors_outplane=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (yforces, shearforces, outofplanemomentforces)
+        self.force_vectors_outofplane=((0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (yforces, shearforces, outofplanemomentforces)
     # give the coordinates weighted and areas of fastener of cg calculation
     def provide_x_weighted_average(self):
         self.area=(math.pi)*(self.Diameter*0.5)**2
@@ -186,7 +186,7 @@ Fcgz = Fz
 Mcgy = My #+ (Fz*cg_location()[0]) - (Fx*cg_location()[1])
 
 #Assign forces to each fastener based on the formulas provided in 4.5
-def assign_fastener_forces_inplane():
+def assign_fastener_forces():
     cg_x, cg_z = cg_location()
     nf=len(Fasteners)
     area_r2_sum=sum(
@@ -199,15 +199,19 @@ def assign_fastener_forces_inplane():
         r=math.hypot(dx,dz)
         F_inplanex=(Fcgx/nf if nf else 0.0,0.0,0.0)
         F_inplanez=(0.0,0.0,Fcgz/nf if nf else 0.0)
+        F_pi=(0.0,Fy/nf if nf else 0.0,0.0)
         if area_r2_sum>0 and r>0:
             magnitude=Mcgy*fastener.area*r/area_r2_sum
+            magnitude_outofplane=Mz*fastener.area*r/area_r2_sum
             tangential=(-dz/r,dx/r) #the tangential thingy from the figure 4.5
             moment_force=(magnitude*tangential[0],0.0,magnitude*tangential[1])
+            moment_outofplane_force=(0.0,magnitude_outofplane,0.0)
         else:
             moment_force=(0.0,0.0,0.0)
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
+        fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
 
-assign_fastener_forces_inplane()
+assign_fastener_forces()
 
 
 
