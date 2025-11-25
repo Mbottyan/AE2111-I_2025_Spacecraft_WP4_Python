@@ -237,10 +237,6 @@ def thermal1():
     return thermal_failure
 
 
-
-
-    return lst
-
 assign_fastener_forces()
 print(thermal1())
 
