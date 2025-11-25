@@ -31,7 +31,7 @@ Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 69, 'Therm
 
 
 material_used = 'Aluminium'
-
+material_used_fastener = 'Aluminium'
 
 
 Fasteners=[] #create list for all fastener instances
@@ -209,17 +209,17 @@ def force_ratio(Compliance_a, Compliance_b):
     return force_ratio
 
 def thermal1():
-    a_c = (Materials[material_used]['Thermal_expansion_coefficient_clamped'])
-    a_f = (Materials[material_used]['Thermal_expansion_coefficient_fastener']) # fix
+    a_c = (Materials[material_used]['Thermal Coefficient'])
+    a_f = (Materials[material_used_fastener]['Thermal Coefficient'])
     T_ref = 15
     T_operate = [-100, 130]
-    psi = 0 # from 4.10
+    psi = force_ratio(Compliance_a, Compliance_b)
     lst = np.zeros((len(Fasteners), len(T_operate)))
     thermal_failure = False
 
     for i, item in enumerate(Fasteners):
         A_sw = item.provide_x_weighted_average()[1]
-        E_b = (Materials[material_used]['Modulus'])
+        E_b = (Materials[material_used_fastener]['Modulus'])
         for j, T in enumerate(T_operate):
             delta_T = T - T_ref
             F_t = (a_c - a_f) * delta_T * E_b * A_sw * (1 - psi)
