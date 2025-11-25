@@ -26,7 +26,7 @@ D_1 = 0 #m  (Put in the real value here)
 D_2 = 0 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 69, 'Thermal Coefficient': 23*10^{-6}}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124},  'Thermal Coefficient': 8.6*10^{-6}}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10^{-6}, 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000},  'Thermal Coefficient': 8.6*10^{-6}}
 
 
 material_used = 'Aluminium'
