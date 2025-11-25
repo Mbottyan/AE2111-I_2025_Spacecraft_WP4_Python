@@ -175,7 +175,7 @@ def assign_fastener_forces():
         r=math.hypot(dx,dz)
         F_inplanex=(Fcgx/nf if nf else 0.0,0.0,0.0)
         F_inplanez=(0.0,0.0,Fcgz/nf if nf else 0.0)
-        F_pi=(0.0,Fy/nf if nf else 0.0,0.0)
+        F_ypi=(0.0,Fy/nf if nf else 0.0,0.0)
         if area_r2_sum>0 and r>0:
             magnitude=Mcgy*fastener.area*r/area_r2_sum
             magnitude_outofplane=Mz*fastener.area*r/area_r2_sum
@@ -185,7 +185,7 @@ def assign_fastener_forces():
         else:
             moment_force=(0.0,0.0,0.0)
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
-        fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
+        fastener.force_vectors_outofplane=(F_ypi, moment_outofplane_force)
 
 assign_fastener_forces()
 
