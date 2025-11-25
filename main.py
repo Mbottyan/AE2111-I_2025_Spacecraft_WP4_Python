@@ -1,5 +1,6 @@
 import math
 import random
+import numpy as np
 
 #Functions list (able to be called whenever you need these values in later code):
 
@@ -25,16 +26,18 @@ D_1 = 0 #m  (Put in the real value here)
 D_2 = 0 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 400}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10^{-6}, 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000},  'Thermal Coefficient': 8.6*10^{-6}}
+
 
 material_used = 'Aluminium'
+
 
 
 Fasteners=[] #create list for all fastener instances
 # When ready with fastener dimensions and coordinates, for each one append manually:
 #Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
-
+#hello
 
 
 class Fastener:
@@ -176,8 +179,8 @@ def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1
 #Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
 
-#for i in range(4):
-    #Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
+for i in range(4):
+    Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
 
 #Translate foces into the cg of the fastener pattern
@@ -199,7 +202,7 @@ def assign_fastener_forces():
         r=math.hypot(dx,dz)
         F_inplanex=(Fcgx/nf if nf else 0.0,0.0,0.0)
         F_inplanez=(0.0,0.0,Fcgz/nf if nf else 0.0)
-        F_pi=(0.0,Fy/nf if nf else 0.0,0.0)
+        F_ypi=(0.0,Fy/nf if nf else 0.0,0.0)
         if area_r2_sum>0 and r>0:
             magnitude=Mcgy*fastener.area*r/area_r2_sum
             magnitude_outofplane=Mz*fastener.area*r/area_r2_sum
@@ -209,10 +212,57 @@ def assign_fastener_forces():
         else:
             moment_force=(0.0,0.0,0.0)
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
-        fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
+        fastener.force_vectors_outofplane=(F_ypi, moment_outofplane_force)
+
+#material_type = Materials[material_used]['type (metal or composite)']
+
+def Compliance_parts(Modulus,D_outer,D_inner,thickness):
+    Compliance = 4*thickness/(Modulus*math.pi*(D_outer**2 - D_inner**2))
+    return Compliance
+
+def Compliance_fastener(Modulus,Cross_area,length):
+    Compliance = length/(Modulus*Cross_area)
+    return Compliance
+
+Compliance_a = Compliance_parts(Materials['Aluminium']['Modulus'],D_fo,D_fi,t2)
+Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**2*math.pi,t2)
+
+#Calculate force ratio
+def force_ratio(Compliance_a, Compliance_b):
+    force_ratio = Compliance_a/(Compliance_a + Compliance_b)
+    return force_ratio
+
+def thermal1():
+    a_c = (Materials[material_used]['Thermal_expansion_coefficient_clamped'])
+    a_f = (Materials[material_used]['Thermal_expansion_coefficient_fastener']) # fix
+    T_ref = 15
+    T_operate = [-100, 130]
+    psi = 0 # from 4.10
+    lst = np.zeros((len(Fasteners), len(T_operate)))
+    thermal_failure = False
+
+    for i, item in enumerate(Fasteners):
+        A_sw = item.provide_x_weighted_average()[1]
+        E_b = (Materials[material_used]['Modulus'])
+        for j, T in enumerate(T_operate):
+            delta_T = T - T_ref
+            F_t = (a_c - a_f) * delta_T * E_b * A_sw * (1 - psi)
+            lst[i, j] = F_t
+        
+            # bearing check
+            item.Pi_magnitude=(item.Pi_magnitude+F_t)
+            Stress = item.find_bearing_stresses()[2]
+
+            Stress_max = (Materials[material_used]['Stress_max'])
+
+            if Stress > Stress_max:
+                thermal_failure = True
+    
+    return thermal_failure
+
 
 assign_fastener_forces()
-
+print(thermal1())
 
 
 
