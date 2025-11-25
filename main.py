@@ -26,7 +26,7 @@ D_1 = 0 #m  (Put in the real value here)
 D_2 = 0 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10^{-6}, 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000},  'Thermal Coefficient': 8.6*10^{-6}}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 69, 'Thermal Coefficient': 23*10^{-6}}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124},  'Thermal Coefficient': 8.6*10^{-6}}
 
 
 material_used = 'Aluminium'
@@ -66,30 +66,41 @@ class Fastener:
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
         #Prints the local wall thickness required
 
-    def check_pull_through_failure(self, D_fo, yield_stress_tension):
+    def check_pull_through_failure(self, D_fo, D_fi, yield_stress_tension):
         # Pull-through load (magnitude)
-        self.Po = abs(self.force_vectors_outofplane[0][1] + self.force_vectors_outofplane[1][1])
+        P_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  # Assuming out-of-plane shear force is in the second element of the first tuple
+        
+        # 1. Shear Pull-Through Check (Shear of plate material at head perimeter)
+        # Shear Area = pi * D_fo * t
         
         # Check t2 (Lug)
         area_shear_t2 = math.pi * D_fo * t2
-        self.shear_stress_t2 = self.Po / area_shear_t2 if area_shear_t2 > 0 else 0
+        self.shear_stress_t2 = P_pull / area_shear_t2 if area_shear_t2 > 0 else 0
         
         # Check t3 (Vehicle Wall)
         area_shear_t3 = math.pi * D_fo * t3
-        self.shear_stress_t3 = self.Po / area_shear_t3 if area_shear_t3 > 0 else 0
+        self.shear_stress_t3 = P_pull / area_shear_t3 if area_shear_t3 > 0 else 0
         
         # Calculate Von Mises Stress for pure shear case (Eq 4.8)
-        # The formula simplifies for pure shear (sigma_x=sigma_y=sigma_z=0) to:
-        # Y = sqrt(3 * tau^2) -> Sigma_vm = sqrt(3) * tau
+        # Sigma_vm = sqrt(3 * tau^2)
         sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
         sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
         
-        # Margins of Safety
-        # Compare Von Mises stress to Tension Yield Stress directly
+        # Margins of Safety for Shear
         self.ms_t2 = (yield_stress_tension / sigma_vm_t2) - 1 if sigma_vm_t2 > 0 else 0
         self.ms_t3 = (yield_stress_tension / sigma_vm_t3) - 1 if sigma_vm_t3 > 0 else 0
         
-        return (self.shear_stress_t2, self.ms_t2, self.shear_stress_t3, self.ms_t3)
+        # 2. Bearing Check under Fastener Head/Nut
+        # Compressive stress on the annulus area between D_fo and D_fi
+        # Area = pi/4 * (D_fo^2 - D_fi^2)
+        area_bearing = (math.pi/4) * (D_fo**2 - D_fi**2)
+        self.bearing_stress_head = P_pull / area_bearing if area_bearing > 0 else 0
+        
+        # Margin of Safety for Bearing (using Yield Tension as proxy)
+        # Note: Bearing yield is often higher, but using Yield Tension is conservative/standard if not specified
+        self.ms_bearing = (yield_stress_tension / self.bearing_stress_head) - 1 if self.bearing_stress_head > 0 else 0
+        
+        return (self.shear_stress_t2, self.ms_t2, self.shear_stress_t3, self.ms_t3, self.bearing_stress_head, self.ms_bearing)
 
 
 
@@ -179,8 +190,8 @@ def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1
 #Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
 
-for i in range(4):
-    Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
+#for i in range(4):
+    #Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
 
 #Translate foces into the cg of the fastener pattern
@@ -202,7 +213,7 @@ def assign_fastener_forces():
         r=math.hypot(dx,dz)
         F_inplanex=(Fcgx/nf if nf else 0.0,0.0,0.0)
         F_inplanez=(0.0,0.0,Fcgz/nf if nf else 0.0)
-        F_ypi=(0.0,Fy/nf if nf else 0.0,0.0)
+        F_pi=(0.0,Fy/nf if nf else 0.0,0.0)
         if area_r2_sum>0 and r>0:
             magnitude=Mcgy*fastener.area*r/area_r2_sum
             magnitude_outofplane=Mz*fastener.area*r/area_r2_sum
@@ -212,7 +223,10 @@ def assign_fastener_forces():
         else:
             moment_force=(0.0,0.0,0.0)
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
-        fastener.force_vectors_outofplane=(F_ypi, moment_outofplane_force)
+        fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
+
+assign_fastener_forces()
+
 
 #material_type = Materials[material_used]['type (metal or composite)']
 
@@ -231,38 +245,6 @@ Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**
 def force_ratio(Compliance_a, Compliance_b):
     force_ratio = Compliance_a/(Compliance_a + Compliance_b)
     return force_ratio
-
-def thermal1():
-    a_c = (Materials[material_used]['Thermal_expansion_coefficient_clamped'])
-    a_f = (Materials[material_used]['Thermal_expansion_coefficient_fastener']) # fix
-    T_ref = 15
-    T_operate = [-100, 130]
-    psi = 0 # from 4.10
-    lst = np.zeros((len(Fasteners), len(T_operate)))
-    thermal_failure = False
-
-    for i, item in enumerate(Fasteners):
-        A_sw = item.provide_x_weighted_average()[1]
-        E_b = (Materials[material_used]['Modulus'])
-        for j, T in enumerate(T_operate):
-            delta_T = T - T_ref
-            F_t = (a_c - a_f) * delta_T * E_b * A_sw * (1 - psi)
-            lst[i, j] = F_t
-        
-            # bearing check
-            item.Pi_magnitude=(item.Pi_magnitude+F_t)
-            Stress = item.find_bearing_stresses()[2]
-
-            Stress_max = (Materials[material_used]['Stress_max'])
-
-            if Stress > Stress_max:
-                thermal_failure = True
-    
-    return thermal_failure
-
-
-assign_fastener_forces()
-print(thermal1())
 
 
 
