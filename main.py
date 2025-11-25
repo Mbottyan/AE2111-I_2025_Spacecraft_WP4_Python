@@ -27,16 +27,18 @@ D_1 = 0 #m  (Put in the real value here)
 D_2 = 0 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 400}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 69, 'Thermal Coefficient': 23*10^{-6}}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124},  'Thermal Coefficient': 8.6*10^{-6}}
+
 
 material_used = 'Aluminium'
+
 
 
 Fasteners=[] #create list for all fastener instances
 # When ready with fastener dimensions and coordinates, for each one append manually:
 #Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
-
+#hello
 
 
 class Fastener:
@@ -45,7 +47,8 @@ class Fastener:
         self.Diameter=float(Diameter)
         self.x_coord=float(x_coord)
         self.z_coord=float(z_coord)
-        self.force_vectors=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (xforces, zforces, momentforces)
+        self.force_vectors_inplane=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (xforces, zforces, momentforces)
+        self.force_vectors_outofplane=((0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (yforces, shearforces, outofplanemomentforces)
     # give the coordinates weighted and areas of fastener of cg calculation
     def provide_x_weighted_average(self):
         self.area=(math.pi)*(self.Diameter*0.5)**2
@@ -54,8 +57,8 @@ class Fastener:
         return (self.area*self.z_coord), (self.area)
     def find_bearing_stresses (self):
         #calculate magnitude of z and x component forces, calculate the stress.
-        x_forces=(self.force_vectors[0][0]+self.force_vectors[1][0]+self.force_vectors[2][0])
-        z_forces=(self.force_vectors[0][2]+self.force_vectors[1][2]+self.force_vectors[2][2])
+        x_forces=(self.force_vectors_inplane[0][0]+self.force_vectors_inplane[1][0]+self.force_vectors_inplane[2][0])
+        z_forces=(self.force_vectors_inplane[0][2]+self.force_vectors_inplane[1][2]+self.force_vectors_inplane[2][2])
         self.Pi=(x_forces,z_forces)
         self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
         self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
@@ -175,13 +178,17 @@ def assign_fastener_forces():
         r=math.hypot(dx,dz)
         F_inplanex=(Fcgx/nf if nf else 0.0,0.0,0.0)
         F_inplanez=(0.0,0.0,Fcgz/nf if nf else 0.0)
+        F_pi=(0.0,Fy/nf if nf else 0.0,0.0)
         if area_r2_sum>0 and r>0:
             magnitude=Mcgy*fastener.area*r/area_r2_sum
+            magnitude_outofplane=Mz*fastener.area*r/area_r2_sum
             tangential=(-dz/r,dx/r) #the tangential thingy from the figure 4.5
             moment_force=(magnitude*tangential[0],0.0,magnitude*tangential[1])
+            moment_outofplane_force=(0.0,magnitude_outofplane,0.0)
         else:
             moment_force=(0.0,0.0,0.0)
-        fastener.force_vectors=(F_inplanex,F_inplanez,moment_force)
+        fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
+        fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
 
 assign_fastener_forces()
 
@@ -225,6 +232,22 @@ print(thermal1())
 
 
 #material_type = Materials[material_used]['type (metal or composite)']
+
+def Compliance_parts(Modulus,D_outer,D_inner,thickness):
+    Compliance = 4*thickness/(Modulus*math.pi*(D_outer**2 - D_inner**2))
+    return Compliance
+
+def Compliance_fastener(Modulus,Cross_area,length):
+    Compliance = length/(Modulus*Cross_area)
+    return Compliance
+
+Compliance_a = Compliance_parts(Materials['Aluminium']['Modulus'],D_fo,D_fi,t2)
+Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**2*math.pi,t2)
+
+#Calculate force ratio
+def force_ratio(Compliance_a, Compliance_b):
+    force_ratio = Compliance_a/(Compliance_a + Compliance_b)
+    return force_ratio
 
 
 
