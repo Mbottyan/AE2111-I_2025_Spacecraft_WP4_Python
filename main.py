@@ -26,9 +26,11 @@ D_1 = 0 #m  (Put in the real value here)
 D_2 = 0 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 400}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 69, 'Thermal Coefficient': 23*10^{-6}}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124},  'Thermal Coefficient': 8.6*10^{-6}}
+
 
 material_used = 'Aluminium'
+
 
 
 Fasteners=[] #create list for all fastener instances
@@ -186,6 +188,22 @@ assign_fastener_forces()
 
 
 #material_type = Materials[material_used]['type (metal or composite)']
+
+def Compliance_parts(Modulus,D_outer,D_inner,thickness):
+    Compliance = 4*thickness/(Modulus*math.pi*(D_outer**2 - D_inner**2))
+    return Compliance
+
+def Compliance_fastener(Modulus,Cross_area,length):
+    Compliance = length/(Modulus*Cross_area)
+    return Compliance
+
+Compliance_a = Compliance_parts(Materials['Aluminium']['Modulus'],D_fo,D_fi,t2)
+Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**2*math.pi,t2)
+
+#Calculate force ratio
+def force_ratio(Compliance_a, Compliance_b):
+    force_ratio = Compliance_a/(Compliance_a + Compliance_b)
+    return force_ratio
 
 
 
