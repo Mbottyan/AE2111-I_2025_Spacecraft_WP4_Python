@@ -1,6 +1,7 @@
 
 import math
 import random
+import numpy as np
 
 #Functions list (able to be called whenever you need these values in later code):
 
@@ -151,8 +152,8 @@ def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1
 #Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
 
-#for i in range(4):
-    #Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
+for i in range(4):
+    Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
 
 #Translate foces into the cg of the fastener pattern
@@ -183,6 +184,44 @@ def assign_fastener_forces():
         fastener.force_vectors=(F_inplanex,F_inplanez,moment_force)
 
 assign_fastener_forces()
+
+def thermal1():
+    a_c = (Materials[material_used]['Thermal_expansion_coefficient_clamped'])
+    a_f = (Materials[material_used]['Thermal_expansion_coefficient_fastener']) # fix
+    T_ref = 15
+    T_operate = [-100, 130]
+    psi = 0 # from 4.10
+    lst = np.zeros((len(Fasteners), len(T_operate)))
+    thermal_failure = False
+
+    for i, item in enumerate(Fasteners):
+        A_sw = item.provide_x_weighted_average()[1]
+        E_b = (Materials[material_used]['Modulus'])
+        for j, T in enumerate(T_operate):
+            delta_T = T - T_ref
+            F_t = (a_c - a_f) * delta_T * E_b * A_sw * (1 - psi)
+            lst[i, j] = F_t
+        
+            # bearing check
+            item.Pi_magnitude=(item.Pi_magnitude+F_t)
+            Stress = item.find_bearing_stresses()[2]
+
+            Stress_max = (Materials[material_used]['Stress_max'])
+
+            if Stress > Stress_max:
+                thermal_failure = True
+    
+    return thermal_failure
+
+
+
+
+    return lst
+
+
+print(thermal1())
+    
+    
 
 
 #material_type = Materials[material_used]['type (metal or composite)']
