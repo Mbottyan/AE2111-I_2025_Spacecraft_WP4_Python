@@ -65,15 +65,15 @@ class Fastener:
 
     def check_pull_through_failure(self, D_fo, yield_stress_tension):
         # Pull-through load (magnitude)
-        P_pull = abs(self.Fy_load)
+        self.Po = abs(self.force_vectors_outofplane[0][1] + self.force_vectors_outofplane[1][1])
         
         # Check t2 (Lug)
         area_shear_t2 = math.pi * D_fo * t2
-        self.shear_stress_t2 = P_pull / area_shear_t2 if area_shear_t2 > 0 else 0
+        self.shear_stress_t2 = self.Po / area_shear_t2 if area_shear_t2 > 0 else 0
         
         # Check t3 (Vehicle Wall)
         area_shear_t3 = math.pi * D_fo * t3
-        self.shear_stress_t3 = P_pull / area_shear_t3 if area_shear_t3 > 0 else 0
+        self.shear_stress_t3 = self.Po / area_shear_t3 if area_shear_t3 > 0 else 0
         
         # Calculate Von Mises Stress for pure shear case (Eq 4.8)
         # The formula simplifies for pure shear (sigma_x=sigma_y=sigma_z=0) to:
