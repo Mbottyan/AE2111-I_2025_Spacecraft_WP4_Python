@@ -6,7 +6,7 @@ import random
 #Functions list (able to be called whenever you need these values in later code):
 
     # - cg_location() - Will give you a tuple with the (x, z) coordinates of the centre of gravity of the fasteners, you can index these too!
-
+    # - Number_Of_Fasteners((w, D_2, material, N_min) - #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners in a tuple
 
 
 
@@ -26,6 +26,10 @@ t3 = 0 #m  (Put in the real value here)
 D_1 = 0 #m  (Put in the real value here)
 D_2 = 0 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
+
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 400}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}}
+
+material_used = 'Aluminium'
 
 Fasteners=[] #create list for all fastener instances
 # When ready with fastener dimensions and coordinates, for each one append manually:
@@ -59,6 +63,13 @@ class Fastener:
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
         #Prints the local wall thickness required
 
+
+
+
+    
+
+
+
 #Calculate the cg location of the fastener pattern  
 def cg_location():
     x_num_sum=0
@@ -78,7 +89,7 @@ def cg_location():
 for i in range(4):
     Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
-#Translate froces into the cg of the fastener pattern
+#Translate foces into the cg of the fastener pattern
 Fcgx = Fx
 Fcgz = Fz
 Mcgy = My + (Fz*cg_location()[0]) - (Fx*cg_location()[1])
@@ -107,15 +118,17 @@ def assign_fastener_forces():
 
 assign_fastener_forces()
 
-def Number_Of_Fasteners(w, D_2, material, N_min):
+
+material_type = Materials[material_used]['type (metal or composite)']
+def Number_Of_Fasteners(w, D_2, material_type, N_min):
     # x-z plane defined same as in 4.1
 
     # defining constraints
 
     # edge constraints are given as a range in 4.4
-    if material == " 1 ":
+    if material_type == 1:
         edge_center_min = [2, 3]
-    elif material == " 2 ":
+    elif material_type == 2:
         edge_center_min = [4, 5]
     
     # fastener spacing always the same
