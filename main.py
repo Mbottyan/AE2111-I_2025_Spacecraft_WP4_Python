@@ -77,17 +77,17 @@ class Fastener:
 
     def check_pull_through_failure(self, D_fi, yield_stress_t2, yield_stress_t3):
         # Pull-through load (magnitude)
-        P_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  #The y component forces
+        self.p_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  #The y component forces
         
         # Shear Area = pi * (D_fi) * t
         
         #t2 lug
         area_shear_t2 = math.pi * D_fi * t2
-        self.shear_stress_t2 = P_pull / area_shear_t2 if area_shear_t2 > 0 else 0
+        self.shear_stress_t2 = self.p_pull / area_shear_t2 if area_shear_t2 > 0 else 0
         
         #t3 wall
         area_shear_t3 = math.pi * D_fi * t3
-        self.shear_stress_t3 = P_pull / area_shear_t3 if area_shear_t3 > 0 else 0
+        self.shear_stress_t3 = self.p_pull / area_shear_t3 if area_shear_t3 > 0 else 0
         
         #Von Mises Stress (Eq 4.8)
         #Sigma_vm = sqrt(3 * tau^2)
