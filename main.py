@@ -1,4 +1,3 @@
-
 import math
 import random
 import numpy as np
@@ -66,6 +65,27 @@ class Fastener:
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
         #Prints the local wall thickness required
+
+    def check_pull_through_failure(self, D_fo, D_fi, yield_stress_tension):
+        # Pull-through load (magnitude)
+        P_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  #The y component forces
+        
+        # Shear Area = pi * (D_fo - D_fi) * t
+        
+        #t2 lug
+        area_shear_t2 = math.pi * (D_fo - D_fi) * t2
+        self.shear_stress_t2 = P_pull / area_shear_t2 if area_shear_t2 > 0 else 0
+        
+        #t3 wall
+        area_shear_t3 = math.pi * (D_fo - D_fi) * t3
+        self.shear_stress_t3 = P_pull / area_shear_t3 if area_shear_t3 > 0 else 0
+        
+        #Von Mises Stress (Eq 4.8)
+        #Sigma_vm = sqrt(3 * tau^2)
+        sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
+        sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
+        
+        return (self.shear_stress_t2, self.shear_stress_t3)
 
 
 
@@ -155,8 +175,8 @@ def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1
 #Fasteners.append(Fastener(diameter,x coodinate, zcoordinate))
 #This will create a Fastener instance for each fastener, which will be used in the cg calculation
 
-for i in range(4):
-    Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
+#for i in range(4):
+    #Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
 
 #Translate foces into the cg of the fastener pattern
@@ -178,7 +198,7 @@ def assign_fastener_forces():
         r=math.hypot(dx,dz)
         F_inplanex=(Fcgx/nf if nf else 0.0,0.0,0.0)
         F_inplanez=(0.0,0.0,Fcgz/nf if nf else 0.0)
-        F_ypi=(0.0,Fy/nf if nf else 0.0,0.0)
+        F_pi=(0.0,Fy/nf if nf else 0.0,0.0)
         if area_r2_sum>0 and r>0:
             magnitude=Mcgy*fastener.area*r/area_r2_sum
             magnitude_outofplane=Mz*fastener.area*r/area_r2_sum
@@ -188,7 +208,10 @@ def assign_fastener_forces():
         else:
             moment_force=(0.0,0.0,0.0)
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
-        fastener.force_vectors_outofplane=(F_ypi, moment_outofplane_force)
+        fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
+
+assign_fastener_forces()
+
 
 #material_type = Materials[material_used]['type (metal or composite)']
 
@@ -207,38 +230,6 @@ Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**
 def force_ratio(Compliance_a, Compliance_b):
     force_ratio = Compliance_a/(Compliance_a + Compliance_b)
     return force_ratio
-
-def thermal1():
-    a_c = (Materials[material_used]['Thermal_expansion_coefficient_clamped'])
-    a_f = (Materials[material_used]['Thermal_expansion_coefficient_fastener']) # fix
-    T_ref = 15
-    T_operate = [-100, 130]
-    psi = 0 # from 4.10
-    lst = np.zeros((len(Fasteners), len(T_operate)))
-    thermal_failure = False
-
-    for i, item in enumerate(Fasteners):
-        A_sw = item.provide_x_weighted_average()[1]
-        E_b = (Materials[material_used]['Modulus'])
-        for j, T in enumerate(T_operate):
-            delta_T = T - T_ref
-            F_t = (a_c - a_f) * delta_T * E_b * A_sw * (1 - psi)
-            lst[i, j] = F_t
-        
-            # bearing check
-            item.Pi_magnitude=(item.Pi_magnitude+F_t)
-            Stress = item.find_bearing_stresses()[2]
-
-            Stress_max = (Materials[material_used]['Stress_max'])
-
-            if Stress > Stress_max:
-                thermal_failure = True
-    
-    return thermal_failure
-
-
-assign_fastener_forces()
-print(thermal1())
 
 
 
