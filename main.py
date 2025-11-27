@@ -27,7 +27,7 @@ D_2 = 0.01 #m  (Put in the real value here)
 D_in = 0.001 #m  (Put in the real value here)
 D_fo = 0.002 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
-safety_factor=1.500
+safety_factor=1
 
 Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000},  'Thermal Coefficient': 8.6*10**(-6)}
 
@@ -84,11 +84,11 @@ class Fastener:
         # Shear Area = pi * (D_fi) * t
         
         #t2 lug
-        area_shear_t2 = math.pi * D_fi * t2
+        area_shear_t2 = math.pi * D_in * t2
         self.shear_stress_t2 = self.p_pull / area_shear_t2 if area_shear_t2 > 0 else 0
         
         #t3 wall
-        area_shear_t3 = math.pi * D_fi * t3
+        area_shear_t3 = math.pi * D_in * t3
         self.shear_stress_t3 = self.p_pull / area_shear_t3 if area_shear_t3 > 0 else 0
         
         #Von Mises Stress (Eq 4.8)
