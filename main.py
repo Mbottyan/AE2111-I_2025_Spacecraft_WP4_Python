@@ -55,13 +55,14 @@ class Fastener:
         return (self.area*self.x_coord), (self.area)
     def provide_z_weighted_average(self):
         return (self.area*self.z_coord), (self.area)
-    def find_bearing_stresses (self):
+    def find_bearing_stresses(self,bearing_allowable_stress):
         #calculate magnitude of z and x component forces, calculate the stress.
         x_forces=(self.force_vectors_inplane[0][0]+self.force_vectors_inplane[1][0]+self.force_vectors_inplane[2][0])
         z_forces=(self.force_vectors_inplane[0][2]+self.force_vectors_inplane[1][2]+self.force_vectors_inplane[2][2])
         self.Pi=(x_forces,z_forces)
         self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
         self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
+        print(self.bearing_stress/bearing_allowable_stress)
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
@@ -95,18 +96,6 @@ class Fastener:
 
 
 
-#Calculate the cg location of the fastener pattern  
-def cg_location():
-    x_num_sum=0
-    x_den_sum=0
-    z_num_sum=0
-    z_den_sum=0
-    for item in Fasteners:
-        x_num_sum+=(item.provide_x_weighted_average()[0])
-        x_den_sum+=(item.provide_x_weighted_average()[1])
-        z_num_sum+=(item.provide_z_weighted_average()[0])
-        z_den_sum+=(item.provide_z_weighted_average()[1])
-    return (x_num_sum/x_den_sum,0, z_num_sum/z_den_sum)
 
 # calculates max ammount of fasteners that fit on the lug, in case a higher ammount of fasteners (N_min) is needed, it checks and if necessary recalculates the lug height to fit (N_min) ammount
 def Number_Of_Fasteners(w, D_2, N_min): 
@@ -176,6 +165,18 @@ def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1
 #for i in range(4):
     #Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
+#Calculate the cg location of the fastener pattern  
+def cg_location():
+    x_num_sum=0
+    x_den_sum=0
+    z_num_sum=0
+    z_den_sum=0
+    for item in Fasteners:
+        x_num_sum+=(item.provide_x_weighted_average()[0])
+        x_den_sum+=(item.provide_x_weighted_average()[1])
+        z_num_sum+=(item.provide_z_weighted_average()[0])
+        z_den_sum+=(item.provide_z_weighted_average()[1])
+    return (x_num_sum/x_den_sum,0, z_num_sum/z_den_sum)
 
 
 #Assign forces to each fastener based on the formulas provided in 4.5
@@ -243,8 +244,8 @@ def force_ratio(Compliance_a, Compliance_b):
 NOF=Number_Of_Fasteners(w,D_2,3)
 Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
 fastener_zcoords=[]
-for item in Fasteners:
-    fastener_zcoords.append(item.z_coord)
+for fastn in Fasteners:
+    fastener_zcoords.append(fastn.z_coord)
     #print(item.x_coord,item.z_coord)
 plate_centre=(0,0,((min(fastener_zcoords)+max(fastener_zcoords))*0.5))
 Fastener_Quantity=len(Fasteners)
@@ -259,3 +260,10 @@ Mcgy = My + (Fz*cg_location()[0]-plate_centre[0]) - (Fx*cg_location()[2]-plate_c
 
 #Now we run the assign fastener forces function, which directly affects the Fastener instances
 assign_fastener_forces()
+
+#Time to do the bearing stress checks
+#I'm using yield stress as the comparison figure, we need to double check if this is right!
+#-----------------------------------------------------------------------------------------
+for fastn in Fasteners:
+    fastn.find_bearing_stresses(Materials[material_used]['Yield Stress'])
+    #print((fastn.bearing_stress))
