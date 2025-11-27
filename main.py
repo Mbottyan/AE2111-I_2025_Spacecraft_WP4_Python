@@ -85,7 +85,7 @@ class Fastener:
         sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
         sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
         
-        return (self.shear_stress_t2, self.shear_stress_t3)
+        return (sigma_vm_t2, sigma_vm_t3)
 
 
 
