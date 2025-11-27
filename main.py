@@ -68,39 +68,24 @@ class Fastener:
 
     def check_pull_through_failure(self, D_fo, D_fi, yield_stress_tension):
         # Pull-through load (magnitude)
-        P_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  # Assuming out-of-plane shear force is in the second element of the first tuple
+        P_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  #The y component forces
         
-        # 1. Shear Pull-Through Check (Shear of plate material at head perimeter)
-        # Shear Area = pi * D_fo * t
+        # Shear Area = pi * (D_fo - D_fi) * t
         
-        # Check t2 (Lug)
-        area_shear_t2 = math.pi * D_fo * t2
+        #t2 lug
+        area_shear_t2 = math.pi * (D_fo - D_fi) * t2
         self.shear_stress_t2 = P_pull / area_shear_t2 if area_shear_t2 > 0 else 0
         
-        # Check t3 (Vehicle Wall)
-        area_shear_t3 = math.pi * D_fo * t3
+        #t3 wall
+        area_shear_t3 = math.pi * (D_fo - D_fi) * t3
         self.shear_stress_t3 = P_pull / area_shear_t3 if area_shear_t3 > 0 else 0
         
-        # Calculate Von Mises Stress for pure shear case (Eq 4.8)
-        # Sigma_vm = sqrt(3 * tau^2)
+        #Von Mises Stress (Eq 4.8)
+        #Sigma_vm = sqrt(3 * tau^2)
         sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
         sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
         
-        # Margins of Safety for Shear
-        self.ms_t2 = (yield_stress_tension / sigma_vm_t2) - 1 if sigma_vm_t2 > 0 else 0
-        self.ms_t3 = (yield_stress_tension / sigma_vm_t3) - 1 if sigma_vm_t3 > 0 else 0
-        
-        # 2. Bearing Check under Fastener Head/Nut
-        # Compressive stress on the annulus area between D_fo and D_fi
-        # Area = pi/4 * (D_fo^2 - D_fi^2)
-        area_bearing = (math.pi/4) * (D_fo**2 - D_fi**2)
-        self.bearing_stress_head = P_pull / area_bearing if area_bearing > 0 else 0
-        
-        # Margin of Safety for Bearing (using Yield Tension as proxy)
-        # Note: Bearing yield is often higher, but using Yield Tension is conservative/standard if not specified
-        self.ms_bearing = (yield_stress_tension / self.bearing_stress_head) - 1 if self.bearing_stress_head > 0 else 0
-        
-        return (self.shear_stress_t2, self.ms_t2, self.shear_stress_t3, self.ms_t3, self.bearing_stress_head, self.ms_bearing)
+        return (self.shear_stress_t2, self.shear_stress_t3)
 
 
 
