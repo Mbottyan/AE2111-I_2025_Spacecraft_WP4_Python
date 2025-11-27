@@ -22,6 +22,7 @@ h = 0.05 #m  (Put in the real value here)
 t1 = 0.02 #m  (Put in the real value here)
 t2=0.005 #m (Put in the real value here)
 t3 = 0 #m  (Put in the real value here)
+t3_list=[]
 D_1 = 0 #m  (Put in the real value here)
 D_2 = 0.01 #m  (Put in the real value here)
 D_in = 0.001 #m  (Put in the real value here)
@@ -29,11 +30,11 @@ D_fo = 0.002 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 safety_factor=1
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000},  'Thermal Coefficient': 8.6*10**(-6)}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000, 'Thermal Coefficient': 8.6*10**(-6)}}
 
 
 material_used = 'Aluminium'
-material_used_fastener = 'Aluminium'
+material_used_fastener = 'Titanium'
 
 
 Fasteners=[] #create list for all fastener instances
@@ -51,6 +52,7 @@ class Fastener:
         self.z_coord=float(z_coord)
         self.force_vectors_inplane=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (xforces, zforces, momentforces)
         self.force_vectors_outofplane=((0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (yforces, shearforces, outofplanemomentforces)
+        self.Pi_magnitude=0
         self.passes_bearing=False
         self.passes_pullthrough=False
     # give the coordinates weighted and areas of fastener of cg calculation
@@ -64,7 +66,8 @@ class Fastener:
         x_forces=(self.force_vectors_inplane[0][0]+self.force_vectors_inplane[1][0]+self.force_vectors_inplane[2][0])
         z_forces=(self.force_vectors_inplane[0][2]+self.force_vectors_inplane[1][2]+self.force_vectors_inplane[2][2])
         self.Pi=(x_forces,z_forces)
-        self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
+        if self.Pi_magnitude==0:
+            self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
         self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
         self.bpasses_count=0
         if safety_factor*self.bearing_stress<bearing_allowable_stress:
@@ -74,6 +77,7 @@ class Fastener:
             print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*self.bearing_stress/bearing_allowable_stress)+'!!!!')
         self.local_wall_thickness=safety_factor*self.Pi_magnitude/(bearing_allowable_stress*self.Diameter)
         print('Local wall thickness for the fastener at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') should be '+str(self.local_wall_thickness*1000)+'mm.')
+
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
 
@@ -247,7 +251,7 @@ def thermal1():
     a_f = (Materials[material_used_fastener]['Thermal Coefficient'])
     T_ref = 15
     T_operate = [-100, 130]
-    psi = force_ratio(Compliance_a, Compliance_b)
+    psi = force_ratio(delta_a, delta_b)
     lst = np.zeros((len(Fasteners), len(T_operate)))
     thermal_failure = False
 
@@ -260,8 +264,11 @@ def thermal1():
             lst[i, j] = F_t
         
             # bearing check
+            #print(item.Pi_magnitude)
+            print(F_t)
             item.Pi_magnitude=(item.Pi_magnitude+F_t)
-            Stress = item.find_bearing_stresses()[2]
+            #print(item.Pi_magnitude)
+            Stress = item.find_bearing_stresses(Materials[material_used]['Yield Stress'])[2]
 
             #Stress_max = (Materials[material_used]['Yield Stress'])
 
@@ -315,9 +322,12 @@ for fastn in Fasteners:
     if fastn.passes_bearing==True:
         bearing_passes+=1
     #print((fastn.bearing_stress))
+    t3_list.append(fastn.local_wall_thickness)
 if bearing_passes==len(Fasteners):
     print('All fasteners pass the bearing check.')
 
+t3=sum(t3_list)/len(t3_list)
+print(t3)
 
 #Pull through check
 pull_through_passes=0
@@ -328,3 +338,12 @@ for fastn in Fasteners:
 
 if pull_through_passes==len(Fasteners):
     print('All fasteners pass the pull through check.')
+
+
+#Compliances
+delta_a=Compliance_parts(Materials[material_used]['Modulus'],D_fo, D_in, t3)
+delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2)**2), 0.03)
+
+
+#Thermal Checks
+thermal1()
