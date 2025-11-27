@@ -19,7 +19,6 @@ My = 88.2132 #Nm   #plus or minus
 Mz = 1.8166 #Nm     #plus or minus
 w = 0.1 #m  (Put in the real value here)
 h = 0.05 #m  (Put in the real value here)
-C_Cmin=0
 t1 = 0.02 #m  (Put in the real value here)
 t2=0.005 #m (Put in the real value here)
 t3 = 0 #m  (Put in the real value here)
@@ -71,10 +70,10 @@ class Fastener:
             self.bpasses_count+=1
         else:
             print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*self.bearing_stress/bearing_allowable_stress)+'!!!!')
+        self.local_wall_thickness=safety_factor*self.Pi_magnitude/(bearing_allowable_stress*self.Diameter)
+        print('Local wall thickness for the fastener at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') should be '+str(self.local_wall_thickness*1000)+'mm.')
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
-        print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
-        #Prints the local wall thickness required
 
     def check_pull_through_failure(self, D_fi, yield_stress_t2, yield_stress_t3):
         # Pull-through load (magnitude)
