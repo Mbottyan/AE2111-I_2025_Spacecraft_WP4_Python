@@ -17,16 +17,17 @@ Fz = -425 #N
 Mx = -386.0275  #Nm #88.2132 to -386.0275
 My = 88.2132 #Nm   #plus or minus
 Mz = 1.8166 #Nm     #plus or minus
-w = 0 #m  (Put in the real value here)
+w = 0.1 #m  (Put in the real value here)
 h = 0 #m  (Put in the real value here)
+C_Cmin=0
 t1 = 0 #m  (Put in the real value here)
 t2=0.005 #m (Put in the real value here)
 t3 = 0 #m  (Put in the real value here)
 D_1 = 0 #m  (Put in the real value here)
-D_2 = 0 #m  (Put in the real value here)
+D_2 = 0.01 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 69, 'Thermal Coefficient': 23*10^{-6}}, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 200}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124},  'Thermal Coefficient': 8.6*10^{-6}}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000},  'Thermal Coefficient': 8.6*10**(-6)}
 
 
 material_used = 'Aluminium'
@@ -70,14 +71,14 @@ class Fastener:
         # Pull-through load (magnitude)
         P_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  #The y component forces
         
-        # Shear Area = pi * (D_fo - D_fi) * t
+        # Shear Area = pi * (D_fi) * t
         
         #t2 lug
-        area_shear_t2 = math.pi * (D_fo - D_fi) * t2
+        area_shear_t2 = math.pi * D_fi * t2
         self.shear_stress_t2 = P_pull / area_shear_t2 if area_shear_t2 > 0 else 0
         
         #t3 wall
-        area_shear_t3 = math.pi * (D_fo - D_fi) * t3
+        area_shear_t3 = math.pi * D_fi * t3
         self.shear_stress_t3 = P_pull / area_shear_t3 if area_shear_t3 > 0 else 0
         
         #Von Mises Stress (Eq 4.8)
@@ -85,7 +86,7 @@ class Fastener:
         sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
         sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
         
-        return (self.shear_stress_t2, self.shear_stress_t3)
+        return (sigma_vm_t2, sigma_vm_t3)
 
 
 
@@ -108,7 +109,7 @@ def cg_location():
     return (x_num_sum/x_den_sum, z_num_sum/z_den_sum)
 
 # calculates max ammount of fasteners that fit on the lug, in case a higher ammount of fasteners (N_min) is needed, it checks and if necessary recalculates the lug height to fit (N_min) ammount
-def Number_Of_Fasteners(w, D_2, material, N_min): 
+def Number_Of_Fasteners(w, D_2, N_min): 
     # x-z plane defined same as in 4.1
 
     # defining constraints
