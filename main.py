@@ -49,6 +49,8 @@ class Fastener:
         self.z_coord=float(z_coord)
         self.force_vectors_inplane=((0,0,0),(0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (xforces, zforces, momentforces)
         self.force_vectors_outofplane=((0,0,0),(0,0,0)) #will hold the force vectors assigned to each fastener (yforces, shearforces, outofplanemomentforces)
+        self.passes_bearing=False
+        self.passes_pullthrough=False
     # give the coordinates weighted and areas of fastener of cg calculation
     def provide_x_weighted_average(self):
         self.area=(math.pi)*(self.Diameter*0.5)**2
@@ -62,7 +64,12 @@ class Fastener:
         self.Pi=(x_forces,z_forces)
         self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
         self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
-        print(self.bearing_stress/bearing_allowable_stress)
+        self.bpasses_count=0
+        if self.bearing_stress<bearing_allowable_stress:
+            self.passes_bearing=True
+            self.bpasses_count+=1
+        else:
+            print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(self.bearing_stress/bearing_allowable_stress)+'!!!!')
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
@@ -264,6 +271,11 @@ assign_fastener_forces()
 #Time to do the bearing stress checks
 #I'm using yield stress as the comparison figure, we need to double check if this is right!
 #-----------------------------------------------------------------------------------------
+bearing_passes=0
 for fastn in Fasteners:
     fastn.find_bearing_stresses(Materials[material_used]['Yield Stress'])
+    if fastn.passes_bearing==True:
+        bearing_passes+=1
     #print((fastn.bearing_stress))
+if bearing_passes==len(Fasteners):
+    print('All fasteners pass the bearing check')
