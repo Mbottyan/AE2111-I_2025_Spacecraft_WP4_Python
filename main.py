@@ -18,9 +18,9 @@ Mx = -386.0275  #Nm #88.2132 to -386.0275
 My = 88.2132 #Nm   #plus or minus
 Mz = 1.8166 #Nm     #plus or minus
 w = 0.1 #m  (Put in the real value here)
-h = 0 #m  (Put in the real value here)
+h = 0.05 #m  (Put in the real value here)
 C_Cmin=0
-t1 = 0 #m  (Put in the real value here)
+t1 = 0.02 #m  (Put in the real value here)
 t2=0.005 #m (Put in the real value here)
 t3 = 0 #m  (Put in the real value here)
 D_1 = 0 #m  (Put in the real value here)
@@ -116,9 +116,9 @@ def Number_Of_Fasteners(w, D_2, N_min):
 
     # edge constraints are given as a range in 4.4
     if(Materials[material_used]['type (metal or composite)']) == 1 :
-        edge_center_min = [2, 3]*D_2
+        edge_center_min = np.array([2, 3])*D_2
     elif (Materials[material_used]['type (metal or composite)']) == 2 :
-        edge_center_min = [4, 5]*D_2
+        edge_center_min = np.array*([4, 5])*D_2
     
     # fastener spacing always the same
     center_center_min = 1.5*D_2
@@ -211,7 +211,7 @@ def assign_fastener_forces():
         fastener.force_vectors_inplane=(F_inplanex,F_inplanez,moment_force)
         fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
 
-assign_fastener_forces()
+#assign_fastener_forces()
 
 
 #material_type = Materials[material_used]['type (metal or composite)']
@@ -224,13 +224,16 @@ def Compliance_fastener(Modulus,Cross_area,length):
     Compliance = length/(Modulus*Cross_area)
     return Compliance
 
-Compliance_a = Compliance_parts(Materials['Aluminium']['Modulus'],D_fo,D_fi,t2)
-Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**2*math.pi,t2)
+#Compliance_a = Compliance_parts(Materials['Aluminium']['Modulus'],D_fo,D_fi,t2)
+#Compliance_b = Compliance_fastener(Materials['Titanium']['Modulus'],(0.5*D_fi)**2*math.pi,t2)
 
 #Calculate force ratio
 def force_ratio(Compliance_a, Compliance_b):
     force_ratio = Compliance_a/(Compliance_a + Compliance_b)
     return force_ratio
 
-
+NOF=Number_Of_Fasteners(w,D_2,3)
+Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
+for item in Fasteners:
+    print(item.x_coord,item.z_coord)
 
