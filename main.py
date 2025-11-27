@@ -76,7 +76,7 @@ class Fastener:
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
         #Prints the local wall thickness required
 
-    def check_pull_through_failure(self, D_fo, D_fi, yield_stress_tension):
+    def check_pull_through_failure(self, D_fi, yield_stress_t2, yield_stress_t3):
         # Pull-through load (magnitude)
         P_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  #The y component forces
         
@@ -94,6 +94,11 @@ class Fastener:
         #Sigma_vm = sqrt(3 * tau^2)
         sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
         sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
+        
+        if (safety_factor * sigma_vm_t2 < yield_stress_t2) and (safety_factor * sigma_vm_t3 < yield_stress_t3):
+            self.passes_pullthrough = True
+        else:
+            print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in pull through!!!!')
         
         return (sigma_vm_t2, sigma_vm_t3)
 
@@ -280,3 +285,14 @@ for fastn in Fasteners:
     #print((fastn.bearing_stress))
 if bearing_passes==len(Fasteners):
     print('All fasteners pass the bearing check.')
+
+
+#Pull through check
+pull_through_passes=0
+for fastn in Fasteners:
+    fastn.check_pull_through_failure(D_2, Materials[material_used]['Yield Stress'], Materials['Aluminium']['Yield Stress'])
+    if fastn.passes_pullthrough==True:
+        pull_through_passes+=1
+
+if pull_through_passes==len(Fasteners):
+    print('All fasteners pass the pull through check.')
