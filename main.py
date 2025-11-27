@@ -146,10 +146,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
     return N_max, edge_spacing, center_center_min, w, D_2
 
     #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
-
-# test case for Number_Of_Fastners function
-#print(Number_Of_Fasteners(15, 2, " 1 ", 3))
-
+#works
 # calculates locations of fastener centroids
 def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1, D_2): # w, h and t1 are
     # at the time of writing this code atleast the fasteners are symmetrically split across the z axis so this calculates positive x-axis fasteners and negative x-axis ones separately
@@ -169,7 +166,7 @@ def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1
         
     return Fasteners
 #print(Fasteners_location(4, 3.0, 3.0, 15, 2, 1, 2))
-
+#works
 
 #generate random fasteners, TO BE REPLACED WITH REAL ONES! When ready with fastener dimensions
 # and coordinates, for each one append manually:
@@ -234,6 +231,10 @@ def force_ratio(Compliance_a, Compliance_b):
 
 NOF=Number_Of_Fasteners(w,D_2,3)
 Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
+fastener_zcoords=[]
 for item in Fasteners:
+    fastener_zcoords.append(item.z_coord)
     print(item.x_coord,item.z_coord)
+plate_centre=(0,0,((min(fastener_zcoords)+max(fastener_zcoords))*0.5))
+Fastener_Quantity=len(Fasteners)
 
