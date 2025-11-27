@@ -24,6 +24,8 @@ t2=0.005 #m (Put in the real value here)
 t3 = 0 #m  (Put in the real value here)
 D_1 = 0 #m  (Put in the real value here)
 D_2 = 0.01 #m  (Put in the real value here)
+D_in = 0.001 #m  (Put in the real value here)
+D_fo = 0.002 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 safety_factor=1.500
 
@@ -75,7 +77,7 @@ class Fastener:
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
 
-    def check_pull_through_failure(self, D_fi, yield_stress_t2, yield_stress_t3):
+    def check_pull_through_failure(self, yield_stress_t2, yield_stress_t3):
         # Pull-through load (magnitude)
         self.p_pull = abs(self.force_vectors_outofplane[0][1]+self.force_vectors_outofplane[1][1])  #The y component forces
         
