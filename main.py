@@ -71,6 +71,8 @@ class Fastener:
             self.bpasses_count+=1
         else:
             print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*self.bearing_stress/bearing_allowable_stress)+'!!!!')
+        self.local_wall_thickness=safety_factor*self.Pi_magnitude/(bearing_allowable_stress*self.Diameter)
+        print('Local wall thickness for the fastener at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') should be '+str(self.local_wall_thickness*1000)+'mm.')
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
