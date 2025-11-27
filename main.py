@@ -26,6 +26,7 @@ t3 = 0 #m  (Put in the real value here)
 D_1 = 0 #m  (Put in the real value here)
 D_2 = 0.01 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
+safety_factor=1.500
 
 Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000},  'Thermal Coefficient': 8.6*10**(-6)}
 
@@ -65,11 +66,11 @@ class Fastener:
         self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
         self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
         self.bpasses_count=0
-        if self.bearing_stress<bearing_allowable_stress:
+        if safety_factor*self.bearing_stress<bearing_allowable_stress:
             self.passes_bearing=True
             self.bpasses_count+=1
         else:
-            print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(self.bearing_stress/bearing_allowable_stress)+'!!!!')
+            print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*self.bearing_stress/bearing_allowable_stress)+'!!!!')
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
         print('Local wall thickness should be'+str(self.Pi_magnitude/(stress_max*self.Diameter)))
@@ -278,4 +279,4 @@ for fastn in Fasteners:
         bearing_passes+=1
     #print((fastn.bearing_stress))
 if bearing_passes==len(Fasteners):
-    print('All fasteners pass the bearing check')
+    print('All fasteners pass the bearing check.')
