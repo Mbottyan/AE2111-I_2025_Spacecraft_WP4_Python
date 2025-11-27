@@ -106,7 +106,7 @@ def cg_location():
         x_den_sum+=(item.provide_x_weighted_average()[1])
         z_num_sum+=(item.provide_z_weighted_average()[0])
         z_den_sum+=(item.provide_z_weighted_average()[1])
-    return (x_num_sum/x_den_sum, z_num_sum/z_den_sum)
+    return (x_num_sum/x_den_sum,0, z_num_sum/z_den_sum)
 
 # calculates max ammount of fasteners that fit on the lug, in case a higher ammount of fasteners (N_min) is needed, it checks and if necessary recalculates the lug height to fit (N_min) ammount
 def Number_Of_Fasteners(w, D_2, N_min): 
@@ -177,14 +177,10 @@ def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1
     #Fasteners.append(Fastener(0.01,random.randint(0,5),random.randint(0,5)))
 
 
-#Translate foces into the cg of the fastener pattern
-Fcgx = Fx
-Fcgz = Fz
-Mcgy = My #+ (Fz*cg_location()[0]) - (Fx*cg_location()[1])
 
 #Assign forces to each fastener based on the formulas provided in 4.5
 def assign_fastener_forces():
-    cg_x, cg_z = cg_location()
+    cg_x, cg_y, cg_z = cg_location()
     nf=len(Fasteners)
     area_r2_sum=sum(
         fastener.area*((fastener.x_coord-cg_x)**2+(fastener.z_coord-cg_z)**2)
@@ -229,12 +225,37 @@ def force_ratio(Compliance_a, Compliance_b):
     force_ratio = Compliance_a/(Compliance_a + Compliance_b)
     return force_ratio
 
+#                                                             #
+##                                                           ##
+###                                                         ###
+####                                                       ####
+#####                                                     #####
+######                                                   ######
+#######                                                 #######
+######                                                   ######
+#####                                                     #####
+####                                                       ####
+###                                                         ###
+##                                                           ##
+#                                                             #
+
+         #Generate fastener coordinates
 NOF=Number_Of_Fasteners(w,D_2,3)
 Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
 fastener_zcoords=[]
 for item in Fasteners:
     fastener_zcoords.append(item.z_coord)
-    print(item.x_coord,item.z_coord)
+    #print(item.x_coord,item.z_coord)
 plate_centre=(0,0,((min(fastener_zcoords)+max(fastener_zcoords))*0.5))
 Fastener_Quantity=len(Fasteners)
 
+#Translate foces into the cg of the fastener pattern
+Fcgx = Fx
+Fcgz = Fz
+Mcgy = My + (Fz*cg_location()[0]-plate_centre[0]) - (Fx*cg_location()[2]-plate_centre[2])
+#print(cg_location())
+#print(Fcgx, Fcgz, Mcgy)
+
+
+#Now we run the assign fastener forces function, which directly affects the Fastener instances
+assign_fastener_forces()
