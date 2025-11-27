@@ -240,6 +240,8 @@ def force_ratio(Compliance_a, Compliance_b):
     force_ratio = Compliance_a/(Compliance_a + Compliance_b)
     return force_ratio
 
+
+#Thermal expansion created stress function
 def thermal1():
     a_c = (Materials[material_used]['Thermal Coefficient'])
     a_f = (Materials[material_used_fastener]['Thermal Coefficient'])
@@ -261,10 +263,10 @@ def thermal1():
             item.Pi_magnitude=(item.Pi_magnitude+F_t)
             Stress = item.find_bearing_stresses()[2]
 
-            Stress_max = (Materials[material_used]['Stress_max'])
+            #Stress_max = (Materials[material_used]['Yield Stress'])
 
-            if Stress > Stress_max:
-                thermal_failure = True
+            #if Stress > Stress_max:
+                #thermal_failure = True
     
     return thermal_failure
 
@@ -320,7 +322,7 @@ if bearing_passes==len(Fasteners):
 #Pull through check
 pull_through_passes=0
 for fastn in Fasteners:
-    fastn.check_pull_through_failure(D_2, Materials[material_used]['Yield Stress'], Materials['Aluminium']['Yield Stress'])
+    fastn.check_pull_through_failure(Materials[material_used]['Yield Stress'], Materials['Aluminium']['Yield Stress'])
     if fastn.passes_pullthrough==True:
         pull_through_passes+=1
 
