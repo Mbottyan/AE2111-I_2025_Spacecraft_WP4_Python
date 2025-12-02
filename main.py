@@ -21,7 +21,7 @@ w = 0.1 #m  (Put in the real value here)
 h = 0.05 #m  (Put in the real value here)
 t1 = 0.02 #m  (Put in the real value here)
 t2=0.005 #m (Put in the real value here)
-t3 = 0 #m  (Put in the real value here)
+t3 = 0.004 #m  (Put in the real value here)
 t3_list=[]
 D_1 = 0 #m  (Put in the real value here)
 D_2 = 0.01 #m  (Put in the real value here)
@@ -30,7 +30,7 @@ D_fo = 0.002 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
 safety_factor=1
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'category (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000, 'Thermal Coefficient': 8.6*10**(-6)}}
+Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'type (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000, 'Thermal Coefficient': 8.6*10**(-6)}}
 
 
 material_used = 'Aluminium'
@@ -55,6 +55,8 @@ class Fastener:
         self.Pi_magnitude=0
         self.passes_bearing=False
         self.passes_pullthrough=False
+        self.MS_pullthrough_t2=0
+        self.MS_pullthrough_t3=0
     # give the coordinates weighted and areas of fastener of cg calculation
     def provide_x_weighted_average(self):
         self.area=(math.pi)*(self.Diameter*0.5)**2
@@ -99,13 +101,13 @@ class Fastener:
         #Sigma_vm = sqrt(3 * tau^2)
         sigma_vm_t2 = math.sqrt(3 * self.shear_stress_t2**2)
         sigma_vm_t3 = math.sqrt(3 * self.shear_stress_t3**2)
-        
+
+        self.MS_pullthrough_t2 = yield_stress_t2 / sigma_vm_t2 - 1
+        self.MS_pullthrough_t3 = yield_stress_t3 / sigma_vm_t3 - 1
         if (safety_factor * sigma_vm_t2 < yield_stress_t2) and (safety_factor * sigma_vm_t3 < yield_stress_t3):
             self.passes_pullthrough = True
         else:
             print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in pull through!!!!')
-        
-        return (sigma_vm_t2, sigma_vm_t3)
 
 
 
@@ -125,7 +127,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
     if(Materials[material_used]['type (metal or composite)']) == 1 :
         edge_center_min = np.array([2, 3])*D_2
     elif (Materials[material_used]['type (metal or composite)']) == 2 :
-        edge_center_min = np.array*([4, 5])*D_2
+        edge_center_min = np.array([4, 5])*D_2
     
     # fastener spacing always the same
     center_center_min = 1.5*D_2
@@ -298,7 +300,7 @@ Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
 fastener_zcoords=[]
 for fastn in Fasteners:
     fastener_zcoords.append(fastn.z_coord)
-    #print(item.x_coord,item.z_coord)
+
 plate_centre=(0,0,((min(fastener_zcoords)+max(fastener_zcoords))*0.5))
 Fastener_Quantity=len(Fasteners)
 
@@ -313,31 +315,30 @@ Mcgy = My + (Fz*cg_location()[0]-plate_centre[0]) - (Fx*cg_location()[2]-plate_c
 #Now we run the assign fastener forces function, which directly affects the Fastener instances
 assign_fastener_forces()
 
-#Time to do the bearing stress checks
+#Time to do the stresss checks
 #I'm using yield stress as the comparison figure, we need to double check if this is right!
 #-----------------------------------------------------------------------------------------
 bearing_passes=0
+pull_through_passes=0
 for fastn in Fasteners:
+    #bearing
     fastn.find_bearing_stresses(Materials[material_used]['Yield Stress'])
     if fastn.passes_bearing==True:
         bearing_passes+=1
     #print((fastn.bearing_stress))
     t3_list.append(fastn.local_wall_thickness)
-if bearing_passes==len(Fasteners):
-    print('All fasteners pass the bearing check.')
 
-t3=max(t3_list)
-print(t3)
-
-#Pull through check
-pull_through_passes=0
-for fastn in Fasteners:
+    #pull through
     fastn.check_pull_through_failure(Materials[material_used]['Yield Stress'], Materials['Aluminium']['Yield Stress'])
+    print("back-up plate safety factor:", fastn.MS_pullthrough_t2, "vehicle wall safety factor:", fastn.MS_pullthrough_t3)
     if fastn.passes_pullthrough==True:
         pull_through_passes+=1
 
+if bearing_passes==len(Fasteners):
+    print('All fasteners pass the bearing check.')
 if pull_through_passes==len(Fasteners):
     print('All fasteners pass the pull through check.')
+print('Minimum required wall thicknesses(in m):', max(t3_list))
 
 
 #Compliances
