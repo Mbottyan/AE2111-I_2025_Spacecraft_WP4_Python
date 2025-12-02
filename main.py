@@ -23,6 +23,7 @@ t1 = 0.02 #m  (Put in the real value here)
 t2=0.005 #m (Put in the real value here)
 t3 = 0.004 #m  (Put in the real value here)
 t3_list=[]
+t3_2_list=[]
 D_1 = 0 #m  (Put in the real value here)
 D_2 = 0.01 #m  (Put in the real value here)
 D_in = 0.001 #m  (Put in the real value here)
@@ -94,8 +95,9 @@ class Fastener:
             self.passes_bearing=True
         else:
             print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*bearingstressfortest/bearing_allowable_stress)+'!!!!')
+            self.passes_bearing=False
         self.local_wall_thickness=safety_factor*self.Pi_magnitude/(bearing_allowable_stress*self.Diameter)
-        print('Local wall thickness for the fastener at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') should be '+str(self.local_wall_thickness*1000)+'mm.')
+        #print('Local wall thickness for the fastener at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') should be '+str(self.local_wall_thickness*1000)+'mm.')
 
         return (self.Pi, self.Pi_magnitude, self.bearing_stress)
         #produces tuple with the (force-vector, magnitude, bearing stress) for comparison with maximum
@@ -243,15 +245,15 @@ def assign_fastener_forces():
         fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
 
 #assign_fastener_forces()
-def bearing_passes_func():
-    bearing_passes=0
-    for fastn in Fasteners:
-        fastn.find_bearing_stresses(Materials[material_used]['Yield Stress'])
-        if fastn.passes_bearing==True:
-            bearing_passes+=1
-    t3_list.append(fastn.local_wall_thickness)
-    if bearing_passes==len(Fasteners):
-        print('All fasteners pass the bearing check.')
+#def bearing_passes_func():
+    #bearing_passes=0
+    #for fastn in Fasteners:
+        #fastn.find_bearing_stresses(Materials[material_used]['Yield Stress'])
+        #if fastn.passes_bearing==True:
+            #bearing_passes+=1
+    #t3_list.append(fastn.local_wall_thickness)
+    #if bearing_passes==len(Fasteners):
+        #print('All fasteners pass the bearing check.')
 
 
 #material_type = Materials[material_used]['type (metal or composite)']
@@ -283,6 +285,7 @@ def thermal1():
     lst = np.zeros((len(Fasteners), len(T_operate)))
     thermal_failure = False
 
+    bearing_passes=0
     for i, item in enumerate(Fasteners):
         A_sw = item.provide_x_weighted_average()[1]
         E_b = (Materials[material_used_fastener]['Modulus'])
@@ -296,15 +299,24 @@ def thermal1():
             #print('ft'+str(F_t))
             placeholder=item.Pi_magnitude
             item.Pi_magnitude=(item.Pi_magnitude+F_t)
+
             #print(item.Pi_magnitude)
             item.find_bearing_stresses(Materials[material_used]['Yield Stress'],j+1)
+            if item.passes_bearing==True:
+                bearing_passes+=1
+            t3_2_list.append(item.local_wall_thickness)
+            
+
             item.Pi_magnitude=placeholder
 
             #Stress_max = (Materials[material_used]['Yield Stress'])
 
             #if Stress > Stress_max:
                 #thermal_failure = True
-    
+    if bearing_passes==len(Fasteners):
+        print('All fasteners pass the thermal bearing check.')
+    print('Minimum required wall thicknesses after thermal (in m):', max(t3_2_list))
+
     return thermal_failure
 
 
