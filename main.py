@@ -312,7 +312,7 @@ def thermal1():
                 #thermal_failure = True
     if bearing_passes==len(Fasteners):
         print('All fasteners pass the thermal bearing check.')
-
+    print('Minimum required wall thicknesses with thermal included(in mm):', max(t3_2_list)*1000)
     return thermal_failure
 
 
@@ -373,7 +373,7 @@ if bearing_passes==len(Fasteners):
     print('All fasteners pass the bearing check.')
 if pull_through_passes==len(Fasteners):
     print('All fasteners pass the pull through check.')
-print('Minimum required wall thicknesses(in m):', max(t3_list))
+print('Minimum required wall thicknesses(in mm):', max(t3_list)*1000)
 
 
 #Compliances
