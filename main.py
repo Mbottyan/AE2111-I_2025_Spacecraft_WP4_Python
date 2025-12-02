@@ -61,20 +61,29 @@ class Fastener:
         return (self.area*self.x_coord), (self.area)
     def provide_z_weighted_average(self):
         return (self.area*self.z_coord), (self.area)
-    def find_bearing_stresses(self,bearing_allowable_stress):
+    def find_bearing_stresses(self,bearing_allowable_stress,thermal=0):
         #calculate magnitude of z and x component forces, calculate the stress.
         x_forces=(self.force_vectors_inplane[0][0]+self.force_vectors_inplane[1][0]+self.force_vectors_inplane[2][0])
         z_forces=(self.force_vectors_inplane[0][2]+self.force_vectors_inplane[1][2]+self.force_vectors_inplane[2][2])
         self.Pi=(x_forces,z_forces)
         if self.Pi_magnitude==0:
             self.Pi_magnitude=math.sqrt(x_forces**2+z_forces**2)
-        self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
+        if thermal==0:
+            self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
+            bearingstressfortest=self.bearing_stress
+        elif thermal==1:
+            self.bearing_stress_cold=self.Pi_magnitude/(self.Diameter*t2)
+            bearingstressfortest=self.bearing_stress_cold
+        elif thermal==2:
+            self.bearing_stress_hot=self.Pi_magnitude/(self.Diameter*t2)
+            bearingstressfortest=self.bearing_stress_hot
+
         self.bpasses_count=0
-        if safety_factor*self.bearing_stress<bearing_allowable_stress:
+        if safety_factor*bearingstressfortest<bearing_allowable_stress:
             self.passes_bearing=True
             self.bpasses_count+=1
         else:
-            print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*self.bearing_stress/bearing_allowable_stress)+'!!!!')
+            print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*bearingstressfortest/bearing_allowable_stress)+'!!!!')
         self.local_wall_thickness=safety_factor*self.Pi_magnitude/(bearing_allowable_stress*self.Diameter)
         print('Local wall thickness for the fastener at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') should be '+str(self.local_wall_thickness*1000)+'mm.')
 
@@ -278,7 +287,7 @@ def thermal1():
             placeholder=item.Pi_magnitude
             item.Pi_magnitude=(item.Pi_magnitude+F_t)
             #print(item.Pi_magnitude)
-            Stress = item.find_bearing_stresses(Materials[material_used]['Yield Stress'])[2]
+            item.find_bearing_stresses(Materials[material_used]['Yield Stress'],j+1)
             item.Pi_magnitude=placeholder
 
             #Stress_max = (Materials[material_used]['Yield Stress'])
@@ -358,3 +367,4 @@ delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2
 
 #Thermal Checks
 thermal1()
+
