@@ -310,7 +310,8 @@ def thermal1():
 
             #if Stress > Stress_max:
                 #thermal_failure = True
-    if bearing_passes==len(Fasteners):
+
+    if bearing_passes==2*len(Fasteners):
         print('All fasteners pass the thermal bearing check.')
 
     return thermal_failure
