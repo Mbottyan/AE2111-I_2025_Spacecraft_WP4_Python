@@ -7,9 +7,6 @@ import numpy as np
     # - cg_location() - Will give you a tuple with the (x, z) coordinates of the centre of gravity of the fasteners, you can index these too!
     # - Number_Of_Fasteners((w, D_2, material, N_min) - #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners in a tuple
 
-
-MS_main = []
-
 #Constant forces from FBD
 Fx = 97.119 #N      #plus or minus
 Fy = 97.119 #N      #plus or minus
@@ -80,15 +77,15 @@ class Fastener:
         if thermal==0:
             self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
             bearingstressfortest=self.bearing_stress
-            self.MS_t2_bearing=bearing_allowable_stress/bearingstressfortest - 1
+            self.MS_t2_bearing=bearing_allowable_stress/abs(bearingstressfortest) - 1
         elif thermal==1:
             self.bearing_stress_cold=self.Pi_magnitude/(self.Diameter*t2)
             bearingstressfortest=self.bearing_stress_cold
-            self.MS_t2_bearing_cold=bearing_allowable_stress/bearingstressfortest - 1
+            self.MS_t2_bearing_cold=bearing_allowable_stress/abs(bearingstressfortest) - 1
         elif thermal==2:
             self.bearing_stress_hot=self.Pi_magnitude/(self.Diameter*t2)
             bearingstressfortest=self.bearing_stress_hot
-            self.MS_t2_bearing_hot=bearing_allowable_stress/bearingstressfortest - 1
+            self.MS_t2_bearing_hot=bearing_allowable_stress/abs(bearingstressfortest) - 1
 
         
         if safety_factor*bearingstressfortest<bearing_allowable_stress:
@@ -315,7 +312,6 @@ def thermal1():
                 #thermal_failure = True
     if bearing_passes==len(Fasteners):
         print('All fasteners pass the thermal bearing check.')
-    print('Minimum required wall thicknesses after thermal (in m):', max(t3_2_list))
 
     return thermal_failure
 
@@ -387,7 +383,17 @@ delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2
 #thermal stress check
 thermal1()
 
-for fastn in Fasteners:
-    MS_main.append((fastn.MS_t2_bearing, min(fastn.MS_t2_bearing_cold, fastn.MS_t2_bearing_hot), fastn.MS_pullthrough_t2, fastn.MS_t3_bearing_thermal, fastn.MS_pullthrough_t3))
 
-print(MS_main)
+
+
+#Final tabulation of results
+print("\nFastener Safety Factors and Coordinates:")
+header = f"{'ID':<5} {'X (m)':<12} {'Z (m)':<12} {'MS Bear(t2)':<15} {'MS Bear(t2 Th)':<15} {'MS Pull(t2)':<15} {'MS Bear(t3 Th)':<15} {'MS Pull(t3)':<15}"
+print(header)
+print("-" * len(header))
+
+for i, fastn in enumerate(Fasteners):
+    ms_thermal_bearing = min(fastn.MS_t2_bearing_cold, fastn.MS_t2_bearing_hot)
+    # MS_main.append((fastn.MS_t2_bearing, ms_thermal_bearing, fastn.MS_pullthrough_t2, fastn.MS_t3_bearing_thermal, fastn.MS_pullthrough_t3))
+    row = f"{i+1:<5} {fastn.x_coord:<12.4f} {fastn.z_coord:<12.4f} {fastn.MS_t2_bearing:<15.4f} {ms_thermal_bearing:<15.4f} {fastn.MS_pullthrough_t2:<15.4f} {fastn.MS_t3_bearing_thermal:<15.4f} {fastn.MS_pullthrough_t3:<15.4f}"
+    print(row)
