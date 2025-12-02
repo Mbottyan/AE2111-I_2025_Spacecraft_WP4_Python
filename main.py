@@ -22,7 +22,7 @@ t3 = 0.0045196933265367365 #m  (Put in the real value here)
 t3_list=[]
 t3_2_list=[]
 D_1 = 0 #m  (Put in the real value here)
-D_2 = 0.01 #m  (Put in the real value here)
+D_2 = 0.004 #m  (Put in the real value here)
 D_in = 0.001 #m  (Put in the real value here)
 D_fo = 0.002 #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
@@ -146,7 +146,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
         edge_center_min = np.array([4, 5])*D_2
     
     # fastener spacing always the same
-    center_center_min = 1.5*D_2
+    center_center_min = 20*D_2
 
     N_max_check = [] # Number of fasteners check
     for e in range(0, len(edge_center_min)):
@@ -161,11 +161,11 @@ def Number_Of_Fasteners(w, D_2, N_min):
             #print(e_test, edge_center_min, N_max, "1") # for testing
     
     if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
-        w = (N_min-1) * center_center_min + 2 * min(edge_center_min)
+        w = (N_min-1) * center_center_min + 2 * max(edge_center_min)
 
         # rawdogging it to only give relevant information as output, this line doesnt make sense but trust
         N_max = N_min
-        edge_spacing = min(edge_center_min)*D_2
+        edge_spacing = max(edge_center_min)*D_2
         #print(edge_spacing, N_max, "2") # for testing
 
     return N_max, edge_spacing, center_center_min, w, D_2
