@@ -1,39 +1,49 @@
 import math
 import random
 import numpy as np
+import json
 
 #Functions list (able to be called whenever you need these values in later code):
 
     # - cg_location() - Will give you a tuple with the (x, z) coordinates of the centre of gravity of the fasteners, you can index these too!
     # - Number_Of_Fasteners((w, D_2, material, N_min) - #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners in a tuple
 
+MS_main = []
+
+# Load parameters from JSON file
+with open('parameters.json', 'r') as f:
+    params = json.load(f)
+
 #Constant forces from FBD
-Fx = 97.119 #N      #plus or minus
-Fy = 97.119 #N      #plus or minus
-Fz = -425 #N
-Mx = -386.0275  #Nm #88.2132 to -386.0275
-My = 88.2132 #Nm   #plus or minus
-Mz = 1.8166 #Nm     #plus or minus
-w = 0.1 #m  (Put in the real value here)
-h = 0.05 #m  (Put in the real value here)
-t1 = 0.02 #m  (Put in the real value here)
-t2=0.0044951 #m (Put in the real value here)
-t3 = 0.0045196933265367365 #m  (Put in the real value here)
+Fx = params['forces']['Fx'] #N      #plus or minus
+Fy = params['forces']['Fy'] #N      #plus or minus
+Fz = params['forces']['Fz'] #N
+Mx = params['forces']['Mx']  #Nm #88.2132 to -386.0275
+My = params['forces']['My'] #Nm   #plus or minus
+Mz = params['forces']['Mz'] #Nm     #plus or minus
+w = params['geometry']['w'] #m  (Put in the real value here)
+h = params['geometry']['h'] #m  (Put in the real value here)
+t1 = params['geometry']['t1'] #m  (Put in the real value here)
+t2 = params['geometry']['t2'] #m (Put in the real value here)
+t3 = params['geometry']['t3'] #m  (Put in the real value here)
 t3_list=[]
 t3_2_list=[]
-D_1 = 0 #m  (Put in the real value here)
-D_2 = 0.01 #m  (Put in the real value here)
-D_in = 0.001 #m  (Put in the real value here)
-D_fo = 0.002 #m  (Put in the real value here)
+D_1 = params['geometry']['D_1'] #m  (Put in the real value here)
+D_2 = params['geometry']['D_2'] #m  (Put in the real value here)
+D_in = params['geometry']['D_in'] #m  (Put in the real value here)
+D_fo = params['geometry']['D_fo'] #m  (Put in the real value here)
 P=0 #N Make a function to find P below and use it to give this variable the correct value
-safety_factor=1
+safety_factor = params['safety_factor']
 
-Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 73500000000, 'Thermal Coefficient': 23*10**(-6), 'Yield Stress':345000000 }, 'Carbon Composite': {'type (metal or composite)': 2, 'Modulus': 230000000000, 'Yield Stress': 4400000000}, 'Titanium': {'type (metal or composite)': 1, 'Modulus': 124000000000, 'Yield Stress': 170000000, 'Thermal Coefficient': 8.6*10**(-6)}}
+Materials = params['materials']
 
 
-material_used = 'Aluminium'
-material_used_fastener = 'Titanium'
-material_used_body = 'Aluminium'
+material_used = params['material_selection']['material_used']
+material_used_fastener = params['material_selection']['material_used_fastener']
+material_used_body = params['material_selection']['material_used_body']
+
+T_ref = params['thermal']['T_ref']
+T_operate = params['thermal']['T_operate']
 
 Fasteners=[] #create list for all fastener instances
 # When ready with fastener dimensions and coordinates, for each one append manually:
@@ -129,10 +139,6 @@ class Fastener:
 
 
     
-
-
-
-
 # calculates max ammount of fasteners that fit on the lug, in case a higher ammount of fasteners (N_min) is needed, it checks and if necessary recalculates the lug height to fit (N_min) ammount
 def Number_Of_Fasteners(w, D_2, N_min): 
     # x-z plane defined same as in 4.1
@@ -214,7 +220,6 @@ def cg_location():
         z_den_sum+=(item.provide_z_weighted_average()[1])
     return (x_num_sum/x_den_sum,0, z_num_sum/z_den_sum)
 
-
 #Assign forces to each fastener based on the formulas provided in 4.5
 def assign_fastener_forces():
     cg_x, cg_y, cg_z = cg_location()
@@ -252,7 +257,6 @@ def assign_fastener_forces():
     #if bearing_passes==len(Fasteners):
         #print('All fasteners pass the bearing check.')
 
-
 #material_type = Materials[material_used]['type (metal or composite)']
 
 def Compliance_parts(Modulus,D_outer,D_inner,thickness):
@@ -271,13 +275,13 @@ def force_ratio(Compliance_a, Compliance_b):
     force_ratio = Compliance_a/(Compliance_a + Compliance_b)
     return force_ratio
 
-
 #Thermal expansion created stress function
 def thermal1():
     a_c = (Materials[material_used]['Thermal Coefficient'])
     a_f = (Materials[material_used_fastener]['Thermal Coefficient'])
-    T_ref = 15
-    T_operate = [-100, 130]
+    # T_ref and T_operate are global variables loaded from JSON
+    # T_ref = 15
+    # T_operate = [-100, 130]
     psi = force_ratio(delta_a, delta_b)
     lst = np.zeros((len(Fasteners), len(T_operate)))
     thermal_failure = False
@@ -348,7 +352,6 @@ Mcgy = My + (Fz*cg_location()[0]-plate_centre[0]) - (Fx*cg_location()[2]-plate_c
 #print(cg_location())
 #print(Fcgx, Fcgz, Mcgy)
 
-
 #Now we run the assign fastener forces function, which directly affects the Fastener instances
 assign_fastener_forces()
 
@@ -376,15 +379,12 @@ if pull_through_passes==len(Fasteners):
     print('All fasteners pass the pull through check.')
 print('Minimum required wall thicknesses(in mm):', max(t3_list)*1000)
 
-
 #Compliances
 delta_a=Compliance_parts(Materials[material_used]['Modulus'],D_fo, D_in, t3)
 delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2)**2), 0.03)
 
 #thermal stress check
 thermal1()
-
-
 
 #Final tabulation of results
 print("\nFastener Safety Factors and Coordinates:")
