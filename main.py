@@ -326,7 +326,7 @@ for fastn in Fasteners:
 if bearing_passes==len(Fasteners):
     print('All fasteners pass the bearing check.')
 
-t3=sum(t3_list)/len(t3_list)
+t3=max(t3_list)
 print(t3)
 
 #Pull through check
