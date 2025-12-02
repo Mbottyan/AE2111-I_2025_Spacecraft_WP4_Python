@@ -8,7 +8,7 @@ import numpy as np
     # - Number_Of_Fasteners((w, D_2, material, N_min) - #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners in a tuple
 
 
-
+MS_main = []
 
 #Constant forces from FBD
 Fx = 97.119 #N      #plus or minus
@@ -35,7 +35,7 @@ Materials = {'Aluminium': {'type (metal or composite)': 1, 'Modulus': 7350000000
 
 material_used = 'Aluminium'
 material_used_fastener = 'Titanium'
-
+material_used_body = 'Aluminium'
 
 Fasteners=[] #create list for all fastener instances
 # When ready with fastener dimensions and coordinates, for each one append manually:
@@ -55,7 +55,13 @@ class Fastener:
         self.Pi_magnitude=0
         self.passes_bearing=False
         self.passes_pullthrough=False
+
+        #safey factors MS
+        self.MS_t2_bearing=0
+        self.MS_t2_bearing_cold=0
+        self.MS_t2_bearing_hot=0
         self.MS_pullthrough_t2=0
+        self.MS_t3_bearing_thermal=0
         self.MS_pullthrough_t3=0
     # give the coordinates weighted and areas of fastener of cg calculation
     def provide_x_weighted_average(self):
@@ -73,17 +79,19 @@ class Fastener:
         if thermal==0:
             self.bearing_stress=self.Pi_magnitude/(self.Diameter*t2)
             bearingstressfortest=self.bearing_stress
+            self.MS_t2_bearing=bearing_allowable_stress/bearingstressfortest - 1
         elif thermal==1:
             self.bearing_stress_cold=self.Pi_magnitude/(self.Diameter*t2)
             bearingstressfortest=self.bearing_stress_cold
+            self.MS_t2_bearing_cold=bearing_allowable_stress/bearingstressfortest - 1
         elif thermal==2:
             self.bearing_stress_hot=self.Pi_magnitude/(self.Diameter*t2)
             bearingstressfortest=self.bearing_stress_hot
+            self.MS_t2_bearing_hot=bearing_allowable_stress/bearingstressfortest - 1
 
-        self.bpasses_count=0
+        
         if safety_factor*bearingstressfortest<bearing_allowable_stress:
             self.passes_bearing=True
-            self.bpasses_count+=1
         else:
             print('Attention: The fastener located at ('+str(self.x_coord)+', 0, '+str(self.z_coord)+') is expected to fail in bearing by a factor of '+str(safety_factor*bearingstressfortest/bearing_allowable_stress)+'!!!!')
         self.local_wall_thickness=safety_factor*self.Pi_magnitude/(bearing_allowable_stress*self.Diameter)
@@ -349,8 +357,7 @@ for fastn in Fasteners:
     t3_list.append(fastn.local_wall_thickness)
 
     #pull through
-    fastn.check_pull_through_failure(Materials[material_used]['Yield Stress'], Materials['Aluminium']['Yield Stress'])
-    print("back-up plate safety factor:", fastn.MS_pullthrough_t2, "vehicle wall safety factor:", fastn.MS_pullthrough_t3)
+    fastn.check_pull_through_failure(Materials[material_used]['Yield Stress'], Materials[material_used_body]['Yield Stress'])
     if fastn.passes_pullthrough==True:
         pull_through_passes+=1
 
@@ -365,7 +372,10 @@ print('Minimum required wall thicknesses(in m):', max(t3_list))
 delta_a=Compliance_parts(Materials[material_used]['Modulus'],D_fo, D_in, t3)
 delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2)**2), 0.03)
 
-
-#Thermal Checks
+#thermal stress check
 thermal1()
 
+for fastn in Fasteners:
+    MS_main.append((fastn.MS_t2_bearing, min(fastn.MS_t2_bearing_cold, fastn.MS_t2_bearing_hot), fastn.MS_pullthrough_t2, fastn.MS_t3_bearing_thermal, fastn.MS_pullthrough_t3))
+
+print(MS_main)
