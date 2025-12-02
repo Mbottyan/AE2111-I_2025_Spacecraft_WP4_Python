@@ -224,6 +224,15 @@ def assign_fastener_forces():
         fastener.force_vectors_outofplane=(F_pi, moment_outofplane_force)
 
 #assign_fastener_forces()
+def bearing_passes_func():
+    bearing_passes=0
+    for fastn in Fasteners:
+        fastn.find_bearing_stresses(Materials[material_used]['Yield Stress'])
+        if fastn.passes_bearing==True:
+            bearing_passes+=1
+    t3_list.append(fastn.local_wall_thickness)
+    if bearing_passes==len(Fasteners):
+        print('All fasteners pass the bearing check.')
 
 
 #material_type = Materials[material_used]['type (metal or composite)']
@@ -265,10 +274,12 @@ def thermal1():
         
             # bearing check
             #print(item.Pi_magnitude)
-            print(F_t)
+            #print('ft'+str(F_t))
+            placeholder=item.Pi_magnitude
             item.Pi_magnitude=(item.Pi_magnitude+F_t)
             #print(item.Pi_magnitude)
             Stress = item.find_bearing_stresses(Materials[material_used]['Yield Stress'])[2]
+            item.Pi_magnitude=placeholder
 
             #Stress_max = (Materials[material_used]['Yield Stress'])
 
