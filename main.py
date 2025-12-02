@@ -385,8 +385,6 @@ delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2
 thermal1()
 
 
-
-
 #Final tabulation of results
 print("\nFastener Safety Factors and Coordinates:")
 header = f"{'ID':<5} {'X (m)':<12} {'Z (m)':<12} {'MS Bear(t2)':<15} {'MS Bear(t2 Th)':<15} {'MS Pull(t2)':<15} {'MS Bear(t3 Th)':<15} {'MS Pull(t3)':<15}"
