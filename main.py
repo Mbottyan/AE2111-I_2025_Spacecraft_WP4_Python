@@ -398,3 +398,4 @@ for i, fastn in enumerate(Fasteners):
     # MS_main.append((fastn.MS_t2_bearing, ms_thermal_bearing, fastn.MS_pullthrough_t2, fastn.MS_t3_bearing_thermal, fastn.MS_pullthrough_t3))
     row = f"{i+1:<5} {fastn.x_coord:<12.4f} {fastn.z_coord:<12.4f} {fastn.MS_t2_bearing:<15.4f} {ms_thermal_bearing:<15.4f} {fastn.MS_pullthrough_t2:<15.4f} {fastn.MS_t3_bearing_thermal:<15.4f} {fastn.MS_pullthrough_t3:<15.4f}"
     print(row)
+input("\nPress Enter to exit...")
