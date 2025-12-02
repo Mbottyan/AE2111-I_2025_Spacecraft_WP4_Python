@@ -393,7 +393,7 @@ print(header)
 print("-" * len(header))
 
 for i, fastn in enumerate(Fasteners):
-    fastn.MS_t3_bearing_thermal=max(t3_2_list)/t3_2_list[i] - 1
+    fastn.MS_t3_bearing_thermal=max(t3_2_list)/max(t3_2_list[i],t3_list[i]) - 1
     ms_thermal_bearing = min(fastn.MS_t2_bearing_cold, fastn.MS_t2_bearing_hot)
     # MS_main.append((fastn.MS_t2_bearing, ms_thermal_bearing, fastn.MS_pullthrough_t2, fastn.MS_t3_bearing_thermal, fastn.MS_pullthrough_t3))
     row = f"{i+1:<5} {fastn.x_coord:<12.4f} {fastn.z_coord:<12.4f} {fastn.MS_t2_bearing:<15.4f} {ms_thermal_bearing:<15.4f} {fastn.MS_pullthrough_t2:<15.4f} {fastn.MS_t3_bearing_thermal:<15.4f} {fastn.MS_pullthrough_t3:<15.4f}"
