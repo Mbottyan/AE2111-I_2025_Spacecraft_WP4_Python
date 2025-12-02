@@ -310,7 +310,8 @@ def thermal1():
 
             #if Stress > Stress_max:
                 #thermal_failure = True
-    if bearing_passes==len(Fasteners):
+
+    if bearing_passes==2*len(Fasteners):
         print('All fasteners pass the thermal bearing check.')
     print('Minimum required wall thicknesses with thermal included(in mm):', max(t3_2_list)*1000)
     return thermal_failure
