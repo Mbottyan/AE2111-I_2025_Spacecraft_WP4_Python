@@ -2,6 +2,12 @@ import math
 import random
 import numpy as np
 import json
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle, Rectangle
+    from mpl_toolkits.mplot3d import Axes3D
+except Exception:
+    plt = None
 
 #Functions list (able to be called whenever you need these values in later code):
 
@@ -398,3 +404,110 @@ for i, fastn in enumerate(Fasteners):
     # MS_main.append((fastn.MS_t2_bearing, ms_thermal_bearing, fastn.MS_pullthrough_t2, fastn.MS_t3_bearing_thermal, fastn.MS_pullthrough_t3))
     row = f"{i+1:<5} {fastn.x_coord:<12.4f} {fastn.z_coord:<12.4f} {fastn.MS_t2_bearing:<15.4f} {ms_thermal_bearing:<15.4f} {fastn.MS_pullthrough_t2:<15.4f} {fastn.MS_t3_bearing_thermal:<15.4f} {fastn.MS_pullthrough_t3:<15.4f}"
     print(row)
+
+
+def visualize_fasteners_3d():
+    """Create a 3D plot of the plate (Lug t2 and Wall t3) and fasteners.
+    - Lug (t2) is shown in skyblue.
+    - Wall (t3) is shown in gray.
+    - Fasteners are shown as cylinders (green=pass, red=fail).
+    - Force vectors are drawn for each fastener.
+    """
+    if plt is None:
+        print('matplotlib not available — cannot create visualization.')
+        return
+
+    fig = plt.figure(figsize=(12, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    all_x = [f.x_coord for f in Fasteners]
+    all_z = [f.z_coord for f in Fasteners]
+    if not all_x or not all_z:
+        return
+
+    # Helper to draw a cuboid
+    def plot_cuboid(ax, xmin, xmax, ymin, ymax, zmin, zmax, color, alpha):
+        # Plot X (Code X), Y (Code Z), Z (Code Thickness Y)
+        # So we map: x->x, y->z, z->y (thickness)
+        
+        # Top face (zmax)
+        X, Y = np.meshgrid([xmin, xmax], [ymin, ymax])
+        ax.plot_surface(X, Y, np.full_like(X, zmax), color=color, alpha=alpha)
+        # Bottom face (zmin)
+        ax.plot_surface(X, Y, np.full_like(X, zmin), color=color, alpha=alpha)
+        
+        # Front/Back (ymax/ymin)
+        X, Z = np.meshgrid([xmin, xmax], [zmin, zmax])
+        ax.plot_surface(X, np.full_like(X, ymax), Z, color=color, alpha=alpha)
+        ax.plot_surface(X, np.full_like(X, ymin), Z, color=color, alpha=alpha)
+        
+        # Left/Right (xmax/xmin)
+        Y, Z = np.meshgrid([ymin, ymax], [zmin, zmax])
+        ax.plot_surface(np.full_like(Y, xmax), Y, Z, color=color, alpha=alpha)
+        ax.plot_surface(np.full_like(Y, xmin), Y, Z, color=color, alpha=alpha)
+
+    # Draw one big plate covering all fasteners
+    margin = 3 * D_2
+    x_min, x_max = min(all_x) - margin, max(all_x) + margin
+    z_min, z_max = min(all_z) - margin, max(all_z) + margin
+    
+    # Draw Wall (t3) -> Thickness from -t3 to 0
+    plot_cuboid(ax, x_min, x_max, z_min, z_max, -t3, 0, 'gray', 0.3)
+    
+    # Draw Lug (t2) -> Thickness from 0 to t2
+    plot_cuboid(ax, x_min, x_max, z_min, z_max, 0, t2, 'skyblue', 0.5)
+    
+    # Draw Fasteners
+    for f in Fasteners:
+        # Cylinder
+        z_cyl = np.linspace(-t3, t2, 20)
+        theta = np.linspace(0, 2*np.pi, 20)
+        theta_grid, z_grid = np.meshgrid(theta, z_cyl)
+        
+        x_grid = f.x_coord + (f.Diameter/2) * np.cos(theta_grid)
+        y_grid = f.z_coord + (f.Diameter/2) * np.sin(theta_grid)
+        
+        is_pass = getattr(f, 'passes_bearing', False) and getattr(f, 'passes_pullthrough', False)
+        color = 'lime' if is_pass else 'red'
+        
+        ax.plot_surface(x_grid, y_grid, z_grid, color=color, alpha=1.0)
+
+    # Draw CG
+    cg = cg_location()
+    cg_x = cg[0]
+    cg_z = cg[2]
+    # Plot CG on top of the lug (t2)
+    ax.scatter(cg_x, cg_z, t2, color='black', s=100, label='CG', zorder=10)
+
+    # Draw Initial Force Vector at CG
+    # External forces: Fx, Fy, Fz
+    # Mapping: Code X -> Plot X, Code Z -> Plot Y, Code Y(Thickness) -> Plot Z
+    # Fx -> Plot X, Fz -> Plot Y, Fy -> Plot Z (Thickness direction)
+    
+    total_force_mag = math.sqrt(Fx**2 + Fz**2 + Fy**2)
+    # Scale factor for visibility (e.g. vector length ~ 10 * Diameter)
+    scale_factor = (D_2 * 10) / total_force_mag if total_force_mag > 0 else 1
+    
+    ax.quiver(cg_x, cg_z, t2, Fx, Fz, Fy, length=total_force_mag*scale_factor, normalize=False, color='purple', linewidth=3, arrow_length_ratio=0.2, label='Resultant Force')
+
+    ax.set_xlabel('X (m)')
+    ax.set_ylabel('Z (m)')
+    ax.set_zlabel('Thickness (m)')
+    ax.set_title('3D Fastener Design with Resultant Force')
+    ax.legend()
+
+    # Set aspect ratio
+    max_range = np.array([max(all_x)-min(all_x), max(all_z)-min(all_z), t2+t3]).max() / 2.0
+    mid_x = (max(all_x)+min(all_x)) * 0.5
+    mid_z = (max(all_z)+min(all_z)) * 0.5
+    mid_y = (t2-t3) * 0.5
+    
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_z - max_range, mid_z + max_range)
+    ax.set_zlim(mid_y - max_range, mid_y + max_range)
+
+    plt.show()
+
+
+# Generate visualization (saved file)
+visualize_fasteners_3d()
