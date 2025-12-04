@@ -320,6 +320,21 @@ def thermal1():
     print('Minimum required wall thicknesses with thermal included(in mm):', max(t3_2_list)*1000)
     return thermal_failure
 
+def mass_calculation_lug():
+    Density = (Materials[material_used]['Density'])
+    edge_spacing = Number_Of_Fasteners(w, D_2, 0)[1]
+    center_spacing = Number_Of_Fasteners(w, D_2, 0)[2]
+    N_f = Number_Of_Fasteners(w, D_2, 0)[0]
+    # lug
+    Volume = ( h + 2*t1 + edge_spacing*4) * t2 * w
+    Volume += w*t1*( (w + (math.pi)*(w*0.5)**2)/2 - (math.pi)*(D_1*0.5)**2) # adds the protuding parts with t1 and D_1
+    for i, item in enumerate(Fasteners):
+        Area_br = item.provide_x_weighted_average()[1]
+        Volume -= Area_br * t2
+    Mass_lug = Volume * Density
+    return Mass_lug
+    
+
 
 #                                                             #
 ##                                                           ##
@@ -387,6 +402,7 @@ delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2
 thermal1()
 
 #Final tabulation of results
+print("Weight of the lug:", mass_calculation_lug, "kg")
 print("\nFastener Safety Factors and Coordinates:")
 header = f"{'ID':<5} {'X (m)':<12} {'Z (m)':<12} {'MS Bear(t2)':<15} {'MS Bear(t2 Th)':<15} {'MS Pull(t2)':<15} {'MS Bear(t3 Th)':<15} {'MS Pull(t3)':<15}"
 print(header)
