@@ -21,12 +21,8 @@ Fz = params['forces']['Fz'] #N
 Mx = params['forces']['Mx']  #Nm #88.2132 to -386.0275
 My = params['forces']['My'] #Nm   #plus or minus
 Mz = params['forces']['Mz'] #Nm     #plus or minus
-<<<<<<< HEAD
 w = params['geometry']['w'] #m  0.003480227081946958
 h = params['geometry']['h'] #m  (Put in the real value here) !!!!!!!!!
-=======
-w = params['geometry']['w'] #m  (Put in the real value here) 0.003480227081946958
->>>>>>> 55be4c42c873b4116f05560f779cca79306c2cca
 t1 = params['geometry']['t1'] #m  (Put in the real value here)
 t2 = params['geometry']['t2'] #m (Put in the real value here) !!!!!!!!!
 t3 = params['geometry']['t3'] #m  (Put in the real value here)
@@ -156,10 +152,11 @@ def Number_Of_Fasteners(w, D_2, N_min):
         edge_center_min = np.array([4, 5])*D_2
     
     # fastener spacing always the same
-    center_center_min = 1000*D_2
+    center_center_min = 1.5*D_2
 
     N_max_check = [] # Number of fasteners check
     for e in range(0, len(edge_center_min)):
+
 
         N_m = 1 + (w-2*edge_center_min[e])//(center_center_min)
         N_max_check.append(N_m)
@@ -353,11 +350,7 @@ def mass_calculation_lug():
 #                                                             #
 
          #Generate fastener coordinates
-<<<<<<< HEAD
 NOF=Number_Of_Fasteners(w,D_2,2)
-=======
-NOF=Number_Of_Fasteners(w,D_2,0)
->>>>>>> 55be4c42c873b4116f05560f779cca79306c2cca
 Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
 fastener_zcoords=[]
 for fastn in Fasteners:
