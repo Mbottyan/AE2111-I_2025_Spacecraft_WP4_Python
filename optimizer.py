@@ -62,28 +62,38 @@ class Fastener:
         return (self.area*self.z_coord), (self.area)
 
 def Number_Of_Fasteners(w, D_2, N_min): 
+    # Determine minimum edge spacing based on material type
     if(Materials[material_used]['type (metal or composite)']) == 1 :
-        edge_center_min = np.array([2, 3])*D_2
+        edge_center_min_factor = np.array([2, 3]) # e1, e2
     elif (Materials[material_used]['type (metal or composite)']) == 2 :
-        edge_center_min = np.array([4, 5])*D_2
+        edge_center_min_factor = np.array([4, 5])
     
-    center_center_min = 1.5*D_2
-
-    N_max_check = []
-    for e in range(0, len(edge_center_min)):
-        N_m = 1 + (w-2*edge_center_min[e])//(center_center_min)
-        N_max_check.append(N_m)
-        e_test = ( w - ( N_m - 1 ) * center_center_min) /2
-        if e_test > float(edge_center_min[e]):
-            N_max = int(max(N_max_check))
-            edge_spacing = e_test
+    edge_center_min = edge_center_min_factor * D_2
+    min_edge = min(edge_center_min)
     
-    if N_min > N_max:
-        w = (N_min-1) * center_center_min + 2 * min(edge_center_min)
-        N_max = N_min
-        edge_spacing = min(edge_center_min)*D_2
+    center_center_min = 1.5 * D_2
 
-    return N_max, edge_spacing, center_center_min, w, D_2
+    # Calculate how much space N_min fasteners need
+    # Width needed = (N-1)*spacing + 2*edge_margin
+    required_width = (N_min - 1) * center_center_min + 2 * min_edge
+    
+    if required_width <= w:
+        # It fits in the original width
+        # Center the pattern by increasing edge spacing
+        N_out = N_min
+        w_out = w
+        # Calculate new edge spacing to center the pattern
+        # Total span of fasteners = (N-1)*s
+        # Remaining space = w - span
+        # Edge spacing = Remaining space / 2
+        edge_spacing = (w - (N_min - 1) * center_center_min) / 2
+    else:
+        # It does not fit, need to expand width
+        N_out = N_min
+        w_out = required_width
+        edge_spacing = min_edge
+
+    return N_out, edge_spacing, center_center_min, w_out, D_2
 
 def Fasteners_location(N_max, edge_spacing, center_center_min, w_new, h, t1, D_2):
     fasteners = []
@@ -172,7 +182,68 @@ def Compliance_fastener(Modulus, Cross_area, length):
 def force_ratio(Compliance_a, Compliance_b):
     return Compliance_a/(Compliance_a + Compliance_b)
 
-def solve_thickness(N_rows, D_2):
+def calculate_margins(x, N_rows, D_2, D_in, D_fo):
+    # x = [t2, t3]
+    t2 = x[0]
+    t3 = x[1]
+    
+    if t2 <= 1e-5 or t3 <= 1e-5:
+        return -1e9 # Invalid
+        
+    # 1. Geometry & Fasteners
+    NOF = Number_Of_Fasteners(w_original, D_2, N_rows)
+    fasteners = Fasteners_location(NOF[0], NOF[1], NOF[2], NOF[3], h, t1, NOF[4])
+    assign_fastener_forces(fasteners)
+    
+    margins = []
+    
+    # 2. Mechanical Checks
+    for f in fasteners:
+        # Bearing t2
+        # Use D_in for bearing check as requested
+        bearing_stress = f.Pi_magnitude / (D_in * t2)
+        ms_bearing = Yield_Stress_Material / (safety_factor * bearing_stress) - 1
+        margins.append(ms_bearing)
+        
+        # Pull-through t2
+        area_shear_t2 = math.pi * D_in * t2
+        shear_stress_t2 = f.p_pull / area_shear_t2
+        sigma_vm_t2 = math.sqrt(3 * shear_stress_t2**2)
+        ms_pull_t2 = Yield_Stress_Material / (safety_factor * sigma_vm_t2) - 1
+        margins.append(ms_pull_t2)
+        
+        # Pull-through t3
+        area_shear_t3 = math.pi * D_in * t3
+        shear_stress_t3 = f.p_pull / area_shear_t3
+        sigma_vm_t3 = math.sqrt(3 * shear_stress_t3**2)
+        ms_pull_t3 = Yield_Stress_Body / (safety_factor * sigma_vm_t3) - 1
+        margins.append(ms_pull_t3)
+
+    # 3. Thermal Checks
+    delta_a = Compliance_parts(Modulus_Material, D_fo, D_in, t3)
+    delta_b = Compliance_fastener(Modulus_Material, (math.pi*(D_in/2)**2), 0.03)
+    
+    psi = force_ratio(delta_a, delta_b)
+    
+    a_c = Thermal_Coeff_Material
+    a_f = Thermal_Coeff_Fastener
+    E_b = Modulus_Fastener
+    
+    for f in fasteners:
+        A_sw = f.area
+        for T in T_operate:
+            delta_T = T - T_ref
+            F_t = (a_c - a_f) * delta_T * E_b * A_sw * (1 - psi)
+            
+            # Thermal Bearing
+            total_load = f.Pi_magnitude + F_t
+            bearing_stress_thermal = total_load / (D_in * t2)
+            ms_bearing_thermal = Yield_Stress_Material / (safety_factor * abs(bearing_stress_thermal)) - 1
+            margins.append(ms_bearing_thermal)
+            
+    return min(margins)
+
+def solve_thickness(N_rows, D_2, D_in, D_fo):
     # Iteratively solve for t2 and t3
     
     # Initial guess
@@ -194,7 +265,7 @@ def solve_thickness(N_rows, D_2):
     # 1. Minimum t2 for Mechanical Bearing
     # sigma = Pi / (D * t2) <= Yield / SF
     # t2 >= Pi * SF / (D * Yield)
-    t2_mech_bearing = max_Pi * safety_factor / (D_2 * Yield_Stress_Material)
+    t2_mech_bearing = max_Pi * safety_factor / (D_in * Yield_Stress_Material)
     
     # 2. Minimum t2 for Pull-through
     # sigma_vm = sqrt(3) * tau = sqrt(3) * Pull / (pi * D_in * t2) <= Yield / SF
@@ -229,45 +300,19 @@ def solve_thickness(N_rows, D_2):
                 F_t = (a_c - a_f) * delta_T * E_b * A_sw * (1 - psi)
                 
                 # Total load for bearing
-                # Note: F_t is added to Pi_magnitude in original code?
-                # Original: item.Pi_magnitude=(item.Pi_magnitude+F_t)
-                # But F_t can be negative. Pi_magnitude is positive.
-                # We should take the worst case magnitude.
-                # If F_t is aligned or opposed? Original code just adds them.
-                # Assuming worst case alignment or scalar addition as per original code logic.
-                
                 total_load = f.Pi_magnitude + F_t
                 # Bearing check
                 # t2 >= Total_Load * SF / (D * Yield)
-                req = abs(total_load) * safety_factor / (D_2 * Yield_Stress_Material)
+                req = abs(total_load) * safety_factor / (D_in * Yield_Stress_Material)
                 if req > max_t2_req_thermal:
                     max_t2_req_thermal = req
         
         # Update t2
-        new_t2 = max(t2_mech_bearing, t2_mech_pull, max_t2_req_thermal)
+        # Add 0.1% buffer to ensure MS >= 0 despite float errors
+        buffer = 1.001
+        new_t2 = max(t2_mech_bearing, t2_mech_pull, max_t2_req_thermal) * buffer
         
-        # t3 is not affected by t2 in the formulas provided (only t3 affects compliance)
-        # So t3 stays at t3_mech_pull (unless there's a t3 thermal check?)
-        # Original code: fastn.MS_t3_bearing_thermal=t3/max(t3_2_list...) - 1
-        # Wait, t3_2_list contains local_wall_thickness from thermal check.
-        # local_wall_thickness = safety_factor*Pi_magnitude/(bearing_allowable_stress*Diameter)
-        # This seems to be calculating t2 thickness?
-        # "MS_t3_bearing_thermal" name suggests t3 check, but the formula uses t3 / max(t2_reqs).
-        # If it compares t3 to t2_reqs, that's weird.
-        # Let's look at original code:
-        # t3_2_list.append(item.local_wall_thickness) -> This is t2 thickness required.
-        # fastn.MS_t3_bearing_thermal=t3/max(t3_2_list[2*i],t3_2_list[2*i+1],t3_list[i]) - 1
-        # It seems it's checking if t3 is greater than the required t2 thickness?
-        # That implies t3 must be at least as thick as the required bearing thickness?
-        # Or maybe it's a typo in the original code and it should be t2?
-        # But MS_t2_bearing is calculated separately.
-        # Let's assume the requirement is t3 >= required_bearing_thickness (maybe for the wall?).
-        # If so, we must update t3 too.
-        
-        new_t3 = max(t3_mech_pull, max_t2_req_thermal) # Assuming t3 must also satisfy bearing thickness?
-        # Actually, let's stick to the explicit checks.
-        # If the user code checks t3 against "max(t3_2_list...)", and t3_2_list are bearing thicknesses...
-        # Then t3 must be >= max bearing thickness.
+        new_t3 = max(t3_mech_pull, max_t2_req_thermal) * buffer
         
         if abs(new_t2 - t2) < 1e-6 and abs(new_t3 - t3) < 1e-6:
             t2 = new_t2
@@ -280,19 +325,26 @@ def solve_thickness(N_rows, D_2):
 
 def optimize():
     # Discrete variables
-    N_rows_options = [3, 4, 5, 6, 7, 8] # Number of rows (N_min)
-    D_2_options = [0.003, 0.004, 0.005, 0.006, 0.008, 0.010] # Standard diameters
+    N_rows_options = [1, 2, 3, 4, 5, 6, 7, 8] # Number of rows (N_min)
+    D_options = [0.003, 0.004, 0.005, 0.006, 0.008, 0.010] # Standard diameters
     
     best_result = None
     best_config = None
     
-    print(f"{'N_rows':<10} {'D_2 (mm)':<10} {'t2 (mm)':<10} {'t3 (mm)':<10} {'Score':<10}")
+    print(f"{'N_rows':<10} {'D (mm)':<10} {'t2 (mm)':<10} {'t3 (mm)':<10} {'Score':<10}")
     print("-" * 60)
 
     for N in N_rows_options:
-        for D in D_2_options:
+        for D in D_options:
             try:
-                t2, t3 = solve_thickness(N, D)
+                # Assumption: D_2 (spacing) scales with D
+                D_2 = D 
+                # Assumption: D_in (fastener) is D
+                D_in = D
+                # Assumption: D_fo (outer) is 2.0 * D
+                D_fo = 2.0 * D
+                
+                t2, t3 = solve_thickness(N, D_2, D_in, D_fo)
                 
                 # Calculate score (weight proxy)
                 score = t2 + t3
@@ -303,7 +355,9 @@ def optimize():
                     best_result = score
                     best_config = {
                         'N_min': N,
-                        'D_2': D,
+                        'D_2': D_2,
+                        'D_in': D_in,
+                        'D_fo': D_fo,
                         't2': t2,
                         't3': t3
                     }
@@ -318,7 +372,7 @@ def optimize():
         
         # Calculate final margins for verification
         print("\nVerifying Margins for Best Config:")
-        ms = calculate_margins([best_config['t2'], best_config['t3']], best_config['N_min'], best_config['D_2'])
+        ms = calculate_margins([best_config['t2'], best_config['t3']], best_config['N_min'], best_config['D_2'], best_config['D_in'], best_config['D_fo'])
         print(f"Minimum Margin of Safety: {ms}")
         
     else:
