@@ -15,7 +15,7 @@ with open('parameters.json', 'r') as f:
     params = json.load(f)
 
 # if you want to force a number of fasteners instead of just having the maximum ammount fill in here
-N_min = 0
+N_min = 2
 
 #Constant forces from FBD
 Fx = params['forces']['Fx'] #N      #plus or minus
@@ -39,6 +39,7 @@ P=0 #N Make a function to find P below and use it to give this variable the corr
 safety_factor = params['safety_factor']
 
 Materials = params['materials']
+w=0.003480227081946958
 h=w
 
 material_used = params['material_selection']['material_used']
@@ -181,7 +182,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
         #print(edge_spacing, N_max, "2") # for testing
     
 
-    return N_max, edge_spacing, center_center_min, w, D_2
+    return N_max, edge_spacing_1, center_center_min, w, D_2, edge_spacing_2
 
     #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
 #works
@@ -355,8 +356,8 @@ def mass_calculation_lug():
 #                                                             #
 
          #Generate fastener coordinates
-NOF=Number_Of_Fasteners(w,D_2,0)
-Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
+NOF=Number_Of_Fasteners(w,D_2,N_min)
+Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4],NOF[5])
 fastener_zcoords=[]
 for fastn in Fasteners:
     fastener_zcoords.append(fastn.z_coord)
