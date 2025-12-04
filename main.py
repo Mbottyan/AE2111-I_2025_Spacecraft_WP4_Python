@@ -153,7 +153,8 @@ def Number_Of_Fasteners(w, D_2, N_min):
         edge_center_min = np.array([2, 3])*D_2
     elif (Materials[material_used]['type (metal or composite)']) == 2 :
         edge_center_min = np.array([4, 5])*D_2
-    
+        
+    edge_spacing_2 = max(edge_center_min)
     # fastener spacing always the same
     center_center_min = 20*D_2
 
@@ -171,7 +172,6 @@ def Number_Of_Fasteners(w, D_2, N_min):
     if N_min != 0:
         
         if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
-            edge_spacing_1 = max(edge_center_min)
             w = (N_min-1) * center_center_min + 2 * edge_spacing_1
 
         # rawdogging it to only give relevant information as output, this line doesnt make sense but trust
@@ -355,7 +355,7 @@ def mass_calculation_lug():
 
          #Generate fastener coordinates
 NOF=Number_Of_Fasteners(w,D_2,3)
-Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
+Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4], NOF[5])
 fastener_zcoords=[]
 for fastn in Fasteners:
     fastener_zcoords.append(fastn.z_coord)
