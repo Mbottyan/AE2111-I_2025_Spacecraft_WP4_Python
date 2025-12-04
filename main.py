@@ -11,11 +11,11 @@ import json
 MS_main = []
 
 # Load parameters from JSON file
-with open('parameters 4 bolts.json', 'r') as f:
+with open('parameters 6 bolts.json', 'r') as f:
     params = json.load(f)
 
 # if you want to force a number of fasteners instead of just having the maximum ammount fill in here
-N_min = 0
+N_min = 3
 
 #Constant forces from FBD
 Fx = params['forces']['Fx'] #N      #plus or minus
@@ -175,6 +175,8 @@ def Number_Of_Fasteners(w, D_2, N_min):
         
         if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
             w = (N_min-1) * center_center_min + 2 * edge_spacing_1
+        else:
+            edge_spacing_1 = (w - (N_min - 1) * center_center_min) / 2
 
         # rawdogging it to only give relevant information as output, this line doesnt make sense but trust
         N_max = N_min
