@@ -24,7 +24,8 @@
       "type (metal or composite)": 1,
       "Modulus": 73500000000,
       "Thermal Coefficient": 2.3e-05,
-      "Yield Stress": 345000000
+      "Yield Stress": 345000000,
+      "Density": 2810
     },
     "Carbon Composite": {
       "type (metal or composite)": 2,
@@ -35,7 +36,8 @@
       "type (metal or composite)": 1,
       "Modulus": 124000000000,
       "Yield Stress": 170000000,
-      "Thermal Coefficient": 8.6e-06
+      "Thermal Coefficient": 8.6e-06,
+      "Density": 4420
     }
   },
   "material_selection": {
