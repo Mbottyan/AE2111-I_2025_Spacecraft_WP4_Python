@@ -328,7 +328,6 @@ def thermal1():
 
 def mass_calculation_lug():
     Density = (Materials[material_used]['Density'])
-    edge_spacing_1 = Number_Of_Fasteners(w, D_2, 0)[1]
     edge_spacing_2 = Number_Of_Fasteners(w, D_2, 0)[5]
     N_f = Number_Of_Fasteners(w, D_2, 0)[0]
     # lug
