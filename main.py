@@ -179,7 +179,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
         #print(edge_spacing, N_max, "2") # for testing
     
 
-    return N_max, edge_spacing, center_center_min, w, D_2
+    return N_max, edge_spacing_1, center_center_min, w, D_2, edge_spacing_2
 
     #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
 #works
@@ -354,7 +354,7 @@ def mass_calculation_lug():
 
          #Generate fastener coordinates
 NOF=Number_Of_Fasteners(w,D_2,0)
-Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
+Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4],NOF[5])
 fastener_zcoords=[]
 for fastn in Fasteners:
     fastener_zcoords.append(fastn.z_coord)
