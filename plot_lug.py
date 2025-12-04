@@ -66,6 +66,7 @@ def Number_Of_Fasteners(w, D_in, N_min):
             w = (N_min-1) * center_center_min + 2 * edge_spacing_1
         else:
             # Distribute fasteners evenly in the available range (keeping edge spacing fixed)
+            edge_spacing_1 = max(edge_center_min)
             if N_min > 1:
                 center_center_min = (w - 2 * edge_spacing_1) / (N_min - 1)
             else:

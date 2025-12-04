@@ -176,7 +176,11 @@ def Number_Of_Fasteners(w, D_2, N_min):
         if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
             w = (N_min-1) * center_center_min + 2 * edge_spacing_1
         else:
-            edge_spacing_1 = (w - (N_min - 1) * center_center_min) / 2
+            edge_spacing_1 = max(edge_center_min)
+            if N_min > 1:
+                center_center_min = (w - 2 * edge_spacing_1) / (N_min - 1)
+            else:
+                edge_spacing_1 = w / 2
 
         # rawdogging it to only give relevant information as output, this line doesnt make sense but trust
         N_max = N_min
