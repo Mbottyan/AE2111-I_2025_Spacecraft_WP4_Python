@@ -1,0 +1,55 @@
+{
+    "forces": {
+        "Fx": 97.119,
+        "Fy": 97.119,
+        "Fz": -425,
+        "Mx": -386.0275,
+        "My": 88.2132,
+        "Mz": 1.8166
+    },
+    "geometry": {
+        "w": 0.02,
+        "h": 0.0075,
+        "t1": 0.00109247036955678,
+        "t2": 0.001127122106268653,
+        "t3": 0.0011270732980966569,
+        "D_1": 0.001740113540973479,
+        "D_2": 0.0028,
+        "D_in": 0.0019898253967768047,
+        "D_fo": 0.002
+    },
+    "safety_factor": 1,
+    "materials": {
+        "Aluminium": {
+            "type (metal or composite)": 1,
+            "Modulus": 73500000000,
+            "Thermal Coefficient": 2.3e-05,
+            "Yield Stress": 345000000,
+            "Density": 2810
+        },
+        "Carbon Composite": {
+            "type (metal or composite)": 2,
+            "Modulus": 230000000000,
+            "Yield Stress": 4400000000
+        },
+        "Titanium": {
+            "type (metal or composite)": 1,
+            "Modulus": 124000000000,
+            "Yield Stress": 170000000,
+            "Thermal Coefficient": 8.6e-06,
+            "Density": 4420
+        }
+    },
+    "material_selection": {
+        "material_used": "Aluminium",
+        "material_used_fastener": "Titanium",
+        "material_used_body": "Aluminium"
+    },
+    "thermal": {
+        "T_ref": 15,
+        "T_operate": [
+            -100,
+            130
+        ]
+    }
+}
