@@ -155,7 +155,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
     elif (Materials[material_used]['type (metal or composite)']) == 2 :
         edge_center_min = np.array([4, 5])*D_2
         
-    edge_spacing_2 = max(edge_center_min)
+    edge_spacing_2 = min(edge_center_min)
     # fastener spacing always the same
     center_center_min = 1.5*D_2
 
@@ -176,7 +176,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
         if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
             w = (N_min-1) * center_center_min + 2 * edge_spacing_1
         else:
-            edge_spacing_1 = max(edge_center_min)
+            edge_spacing_1 = min(edge_center_min)
             if N_min > 1:
                 center_center_min = (w - 2 * edge_spacing_1) / (N_min - 1)
             else:
@@ -184,7 +184,7 @@ def Number_Of_Fasteners(w, D_2, N_min):
 
         # rawdogging it to only give relevant information as output, this line doesnt make sense but trust
         N_max = N_min
-        edge_spacing_2 = max(edge_center_min)
+        edge_spacing_2 = min(edge_center_min)
         #print(edge_spacing, N_max, "2") # for testing
     
 
