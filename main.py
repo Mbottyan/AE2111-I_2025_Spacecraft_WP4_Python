@@ -39,7 +39,7 @@ P=0 #N Make a function to find P below and use it to give this variable the corr
 safety_factor = params['safety_factor']
 
 Materials = params['materials']
-w=0.003480227081946958
+
 h=w
 
 material_used = params['material_selection']['material_used']
