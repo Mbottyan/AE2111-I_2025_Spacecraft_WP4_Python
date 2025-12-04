@@ -14,6 +14,9 @@ MS_main = []
 with open('parameters.json', 'r') as f:
     params = json.load(f)
 
+# if you want to force a number of fasteners instead of just having the maximum ammount fill in here
+N_min = 0
+
 #Constant forces from FBD
 Fx = params['forces']['Fx'] #N      #plus or minus
 Fy = params['forces']['Fy'] #N      #plus or minus
@@ -149,7 +152,8 @@ def Number_Of_Fasteners(w, D_2, N_min):
         edge_center_min = np.array([2, 3])*D_2
     elif (Materials[material_used]['type (metal or composite)']) == 2 :
         edge_center_min = np.array([4, 5])*D_2
-    
+        
+    edge_spacing_2 = max(edge_center_min)
     # fastener spacing always the same
     center_center_min = 1000*D_2
 
@@ -162,15 +166,16 @@ def Number_Of_Fasteners(w, D_2, N_min):
         e_test = ( w - ( N_m - 1 ) * center_center_min) /2 # chooses highest N and its associated edge spacing
         if e_test > float(edge_center_min[e]):
             N_max = int(max(N_max_check))
-            edge_spacing = e_test
+            edge_spacing_1 = e_test
             #print(e_test, edge_center_min, N_max, "1") # for testing
-    
-    if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
-        w = (N_min-1) * center_center_min + 2 * max(edge_center_min)
+    if N_min != 0:
+        
+        if N_min > N_max: # if more fasteners are needed, this will calculate the spacing
+            w = (N_min-1) * center_center_min + 2 * edge_spacing_1
 
         # rawdogging it to only give relevant information as output, this line doesnt make sense but trust
         N_max = N_min
-        edge_spacing = max(edge_center_min)*D_2
+        edge_spacing_2 = max(edge_center_min)
         #print(edge_spacing, N_max, "2") # for testing
     
 
@@ -179,19 +184,19 @@ def Number_Of_Fasteners(w, D_2, N_min):
     #returns max number of fasteners, edge spacing, center spacing, new width for minimum fasteners, minimum fasteners
 #works
 # calculates locations of fastener centroids
-def Fasteners_location(N_max: int, edge_spacing, center_center_min, w_new, h, t1, D_2): # w, h and t1 are
+def Fasteners_location(N_max: int, edge_spacing_1, center_center_min, w_new, h, t1, D_2, edge_spacing_2): # w, h and t1 are
     # at the time of writing this code atleast the fasteners are symmetrically split across the z axis so this calculates positive x-axis fasteners and negative x-axis ones separately
     for f in range(N_max):
         
         diameter = D_2 # as of writing this, every fastener has same diameter, if this changes, this has to be rewritten
 
         # first half of fasteners on positive x-axis
-        x = h/2 + t1 + edge_spacing  # only 1 column of fasteners per side so far, if later that seems to not be enough the calculation of x has to change
-        z = f * center_center_min + edge_spacing - w_new/2
+        x = h/2 + t1 + edge_spacing_2  # only 1 column of fasteners per side so far, if later that seems to not be enough the calculation of x has to change
+        z = f * center_center_min + edge_spacing_1 - w_new/2
         Fasteners.append(Fastener(diameter, x , z))
         #print(f, x, z)
         # second half of fasteners on negative x-axis
-        x = -h/2 - t1 - edge_spacing
+        x = -h/2 - t1 - edge_spacing_2
         Fasteners.append(Fastener(diameter, x , z))
         #print(f, x, z)
         
@@ -322,10 +327,10 @@ def thermal1():
 
 def mass_calculation_lug():
     Density = (Materials[material_used]['Density'])
-    edge_spacing = Number_Of_Fasteners(w, D_2, 0)[1]
+    edge_spacing_2 = Number_Of_Fasteners(w, D_2, 0)[5]
     N_f = Number_Of_Fasteners(w, D_2, 0)[0]
     # lug
-    Volume = ( h + 2*t1 + edge_spacing*4) * t2 * w
+    Volume = ( h + 2*t1 + edge_spacing_2*4) * t2 * w
     Volume += w*t1*( (w + (math.pi)*(w*0.5)**2)/2 - (math.pi)*(D_1*0.5)**2) # adds the protuding parts with t1 and D_1
     for i, item in enumerate(Fasteners):
         Area_br = item.provide_x_weighted_average()[1]
