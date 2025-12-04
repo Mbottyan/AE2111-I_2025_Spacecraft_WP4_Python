@@ -355,7 +355,7 @@ def mass_calculation_lug():
 #                                                             #
 
          #Generate fastener coordinates
-NOF=Number_Of_Fasteners(w,D_2,2)
+NOF=Number_Of_Fasteners(w,D_2,0)
 Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
 fastener_zcoords=[]
 for fastn in Fasteners:
