@@ -3,7 +3,7 @@ import subprocess
 import sys
 import os
 
-PARAM_FILE = 'parameters 4 bolts.json'
+PARAM_FILE = 'parameters 6 bolts.json'
 MAIN_SCRIPT = 'main.py'
 
 def read_params():
@@ -110,7 +110,7 @@ def optimize_parameter(param_keys, target_ms_keys, tolerance=1e-5):
         # If min_global_ms < 0, we are too low. Increase low.
         # If min_global_ms >= 0, we are feasible. We can try to go lower.
         
-        if min_global_ms < 0:
+        if min_target < 0:
             low = mid
         else:
             best_val = mid
@@ -124,7 +124,7 @@ def optimize_parameter(param_keys, target_ms_keys, tolerance=1e-5):
             # But the user said "change t3 until t3 values... are 0".
             # This implies t3 IS the limiting factor for t3 optimization.
             
-            if abs(min_global_ms) < tolerance and abs(min_target) < tolerance:
+            if abs(min_target) < tolerance:
                  break
                 
     # Set to best found value
