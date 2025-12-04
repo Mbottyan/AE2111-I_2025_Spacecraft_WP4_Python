@@ -8,14 +8,14 @@
     "Mz": 1.8166
   },
   "geometry": {
-    "w": 0.05,
+    "w": 0.00417627249833635,
     "h": 0.00,
-    "t1": 0.02,
+    "t1": 0.00109247036955678,
     "t2": 0.0044951,
     "t3": 0.0045196933265367365,
     "D_1": 0,
-    "D_2": 0.1,
-    "D_in": 0.0001,
+    "D_2": 0.004,
+    "D_in": 0.004,
     "D_fo": 0.002
   },
   "safety_factor": 1,
@@ -39,7 +39,7 @@
     }
   },
   "material_selection": {
-    "material_used": "Titanium",
+    "material_used": "Aluminium",
     "material_used_fastener": "Titanium",
     "material_used_body": "Aluminium"
   },

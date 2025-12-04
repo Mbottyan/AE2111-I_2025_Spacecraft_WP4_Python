@@ -37,6 +37,17 @@ Modulus_Fastener = Materials[material_used_fastener]['Modulus']
 Thermal_Coeff_Material = Materials[material_used]['Thermal Coefficient']
 Thermal_Coeff_Fastener = Materials[material_used_fastener]['Thermal Coefficient']
 
+# Densities (kg/m^3) - Added for Mass Optimization
+Densities = {
+    "Aluminium": 2780,
+    "Titanium": 4430,
+    "Carbon Composite": 1600, # Approximate
+    "Steel": 7850
+}
+Rho_Plate = Densities.get(material_used, 2780)
+Rho_Fastener = Densities.get(material_used_fastener, 4430)
+Rho_Body = Densities.get(material_used_body, 2780)
+
 class Fastener:
     def __init__(self, Diameter, x_coord, z_coord):
         self.Diameter = float(Diameter)
@@ -322,17 +333,150 @@ def solve_thickness(N_rows, D_2, D_in, D_fo):
         t3 = new_t3
         
     return t2, t3
+     {right_mark}      (z={z:.4f})")
+
+def plot_top_configurations(top_results):
+    try:
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Rectangle, Circle
+    except ImportError:
+        print("Matplotlib not installed.")
+        return
+
+    n_res = min(len(top_results), 3)
+    # Create figure with 2 rows (Front View, Side View)
+    fig, axes = plt.subplots(2, n_res, figsize=(6 * n_res, 10))
+    
+    # Normalize axes to 2D array [row, col]
+    if n_res == 1:
+        axes = axes.reshape(2, 1)
+    elif len(axes.shape) == 1: # Should not happen with 2 rows, but for safety
+        axes = axes.reshape(2, -1)
+
+    for i, res in enumerate(top_results):
+        if i >= n_res: break
+        
+        cfg = res['config']
+        # Extract geometry
+        N_min = cfg['N_min']
+        D_in_val = cfg['D_in']
+        D_2_val = cfg['D_2']
+        t2_val = cfg['t2']
+        t3_val = cfg['t3']
+        
+        # Re-calculate layout
+        NOF = Number_Of_Fasteners(w_original, D_2_val, N_min)
+        # NOF returns: N_out, edge_spacing, center_center_min, w_out, D_2
+        N_act, edge_spacing, s, w_new, _ = NOF
+        
+        fasteners = Fasteners_location(N_act, edge_spacing, s, w_new, h, t1, D_2_val)
+        
+        # --- Front View (X-Z) ---
+        ax_front = axes[0, i]
+        
+        # Plate Dimensions
+        # Fasteners are at +/- x_f.
+        # Plate width = 2 * (abs(x_f) + edge_spacing)
+        if fasteners:
+            x_f = abs(fasteners[0].x_coord)
+            plate_width = 2 * (x_f + edge_spacing)
+            # Force plate height to be w_original as requested
+            plate_height = w_original 
+        else:
+            plate_width = w_original
+            plate_height = w_original
+
+        # Draw Plate
+        rect_plate = Rectangle((-plate_width/2, -plate_height/2), plate_width, plate_height, 
+                               linewidth=2, edgecolor='black', facecolor='#e0e0e0', alpha=0.5, label='Base Plate')
+        ax_front.add_patch(rect_plate)
+        
+        # Draw Flanges (Front View footprint)
+        # Left Flange
+        rect_fl_l = Rectangle((-h/2 - t1, -plate_height/2), t1, plate_height, 
+                              linewidth=1, edgecolor='black', facecolor='#a0a0a0', linestyle='--', label='Flange')
+        ax_front.add_patch(rect_fl_l)
+        # Right Flange
+        rect_fl_r = Rectangle((h/2, -plate_height/2), t1, plate_height, 
+                              linewidth=1, edgecolor='black', facecolor='#a0a0a0', linestyle='--')
+        ax_front.add_patch(rect_fl_r)
+
+        # Draw Fasteners
+        for f in fasteners:
+            circle = Circle((f.x_coord, f.z_coord), f.Diameter/2, color='blue', alpha=0.8)
+            ax_front.add_patch(circle)
+            ax_front.plot(f.x_coord, f.z_coord, 'k+')
+
+        ax_front.set_title(f"Rank {i+1}: Front View (X-Z)\nN={N_min}, D={D_in_val*1000:.1f}mm")
+        ax_front.set_xlabel("X (m)")
+        ax_front.set_ylabel("Z (m)")
+        ax_front.axis('equal')
+        ax_front.grid(True, alpha=0.3)
+        # Legend only on first plot to save space
+        if i == 0: ax_front.legend(loc='upper right', fontsize='x-small')
+
+        # --- Side View (Y-Z) ---
+        ax_side = axes[1, i]
+        
+        # Coordinate system for Side View: Y is horizontal (Thickness), Z is vertical.
+        # Y=0 is interface between Wall and Plate.
+        # Wall is Y < 0. Plate is Y > 0.
+        
+        # Draw Wall
+        wall_vis_width = max(t3_val, 0.005)
+        rect_wall = Rectangle((-wall_vis_width, -plate_height/2 - 0.002), wall_vis_width, plate_height + 0.004,
+                              hatch='///', edgecolor='black', facecolor='none', label='Wall')
+        ax_side.add_patch(rect_wall)
+        
+        # Draw Base Plate
+        rect_plate_side = Rectangle((0, -plate_height/2), t2_val, plate_height,
+                                    edgecolor='black', facecolor='#e0e0e0', label='Base Plate')
+        ax_side.add_patch(rect_plate_side)
+        
+        # Draw Lug/Flange
+        # Extends from Y = t2_val.
+        # Length? If D_1 is 0, assume length = plate_height (w_new) for visualization.
+        D_1_param = params['geometry']['D_1']
+        lug_length = D_1_param if D_1_param > 0 else w_new
+        lug_y_start = t2_val
+        
+        # Draw simple rectangle for lug profile
+        rect_lug = Rectangle((lug_y_start, -plate_height/2), lug_length, plate_height,
+                             edgecolor='black', facecolor='#a0a0a0', alpha=0.7, label='Lug')
+        ax_side.add_patch(rect_lug)
+        
+        # Draw Pin Hole
+        # Center at (lug_y_start + lug_length/2, 0) if D_1 not specified?
+        pin_x = lug_y_start + (lug_length * 0.75) # Heuristic
+        pin_z = 0
+        pin_radius = w_new * 0.2 # Heuristic
+        circle_pin = Circle((pin_x, pin_z), pin_radius, color='white', ec='red', linewidth=2)
+        ax_side.add_patch(circle_pin)
+        
+        ax_side.set_title(f"Side View (Y-Z)\nt2={t2_val*1000:.1f}mm, t3={t3_val*1000:.1f}mm")
+        ax_side.set_xlabel("Y (Thickness) (m)")
+        ax_side.set_ylabel("Z (m)")
+        ax_side.axis('equal')
+        ax_side.grid(True, alpha=0.3)
+        if i == 0: ax_side.legend(loc='upper right', fontsize='x-small')
+
+    plt.suptitle("Top 3 Optimized Fastener Configurations - Detailed Views")
+    plt.tight_layout()
+    plt.show()
 
 def optimize():
     # Discrete variables
-    N_rows_options = [1, 2, 3, 4, 5, 6, 7, 8] # Number of rows (N_min)
-    D_options = [0.003, 0.004, 0.005, 0.006, 0.008, 0.010] # Standard diameters
+    N_rows_options = [1, 2, 3, 4, 5, 6] # Number of rows (N_min) - Added 6
+    # Assumed D options in meters
+    D_options = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0008, 0.001, 0.0015, 0.002, 0.0025, 0.003, 0.004, 0.005, 0.006, 0.008, 0.010] 
     
-    best_result = None
-    best_config = None
+    results = []
     
-    print(f"{'N_rows':<10} {'D (mm)':<10} {'t2 (mm)':<10} {'t3 (mm)':<10} {'Score':<10}")
-    print("-" * 60)
+    print(f"{'N_rows':<8} {'D(mm)':<8} {'t2(mm)':<10} {'t3(mm)':<10} {'Mass(kg)':<10} {'Score(Mass)':<12}")
+    print("-" * 70)
+
+    # Check if w_original is very small, which might cause all configs to fail
+    print(f"Constraint: Plate Height (w) fixed to {w_original*1000:.2f} mm from parameters.json")
 
     for N in N_rows_options:
         for D in D_options:
@@ -344,16 +488,67 @@ def optimize():
                 # Assumption: D_fo (outer) is 2.0 * D
                 D_fo = 2.0 * D
                 
+                # Check geometric constraint FIRST
+                # Re-run geometry to check if it fits in w_original
+                NOF = Number_Of_Fasteners(w_original, D_2, N)
+                # NOF returns: N_out, edge_spacing, center_center_min, w_out, D_2
+                w_required = NOF[3]
+                
+                if w_required > w_original * 1.0001: # Tolerance for float comparison
+                    # Skip if it requires more width than available in JSON
+                    # print(f"Skipping N={N}, D={D}: Required w={w_required*1000:.1f}mm > {w_original*1000:.1f}mm")
+                    continue
+
                 t2, t3 = solve_thickness(N, D_2, D_in, D_fo)
                 
-                # Calculate score (weight proxy)
-                score = t2 + t3
+                # --- Mass Calculation ---
+                # 1. Calculate Plate Dimensions
+                # Use w_original as the fixed height
                 
-                print(f"{N:<10} {D*1000:<10.1f} {t2*1000:<10.4f} {t3*1000:<10.4f} {score:<10.6f}")
+                # Fastener X-position (distance from center)
+                # x = h/2 + t1 + edge_spacing
+                # Note: edge_spacing from NOF might be calculated based on w_required if we didn't enforce it.
+                # But since we enforced w_required <= w_original, NOF returned w_out = w_original (or smaller? No, NOF logic sets w_out=w if fits)
                 
-                if best_result is None or score < best_result:
-                    best_result = score
-                    best_config = {
+                N_act, edge_spacing, s, w_out, _ = NOF
+                
+                x_pos = h/2 + t1 + edge_spacing
+                
+                # Plate Width (X-direction)
+                plate_width_x = 2 * (x_pos + max(edge_spacing, D_fo/2))
+                
+                # Plate Height (Z-direction) is fixed to w_original
+                plate_height_z = w_original
+                
+                area_plate = plate_width_x * plate_height_z
+                
+                # 2. Volumes
+                vol_plate_t2 = area_plate * t2
+                vol_plate_t3 = area_plate * t3 
+                
+                # Fastener Length: t2 + t3 + extra for nut/head (approx 1.5*D)
+                bolt_length = t2 + t3 + 1.5 * D_in
+                vol_bolt_total = N_act * 2 * (math.pi * (D_in/2)**2 * bolt_length) 
+                
+                vol_holes_t2 = N_act * 2 * (math.pi * (D_in/2)**2 * t2)
+                vol_holes_t3 = N_act * 2 * (math.pi * (D_in/2)**2 * t3)
+                
+                # 3. Mass
+                mass_plate_t2 = (vol_plate_t2 - vol_holes_t2) * Rho_Plate
+                mass_plate_t3 = (vol_plate_t3 - vol_holes_t3) * Rho_Body
+                mass_bolts = vol_bolt_total * Rho_Fastener
+                
+                total_mass = mass_plate_t2 + mass_plate_t3 + mass_bolts
+                
+                # Score is now Mass
+                score = total_mass
+                
+                print(f"{N:<8} {D*1000:<8.1f} {t2*1000:<10.4f} {t3*1000:<10.4f} {total_mass:<10.6f} {score:<12.6f}")
+                
+                results.append({
+                    'score': score,
+                    'mass': total_mass,
+                    'config': {
                         'N_min': N,
                         'D_2': D_2,
                         'D_in': D_in,
@@ -361,20 +556,44 @@ def optimize():
                         't2': t2,
                         't3': t3
                     }
+                })
             except Exception as e:
                 # print(f"Failed for {N}, {D}: {e}")
                 pass
 
     print("\nOptimization Complete.")
-    if best_config:
-        print("Best Configuration Found:")
-        print(json.dumps(best_config, indent=4))
+    
+    if results:
+        # Sort by score (Mass)
+        results.sort(key=lambda x: x['score'])
         
-        # Calculate final margins for verification
-        print("\nVerifying Margins for Best Config:")
-        ms = calculate_margins([best_config['t2'], best_config['t3']], best_config['N_min'], best_config['D_2'], best_config['D_in'], best_config['D_fo'])
-        print(f"Minimum Margin of Safety: {ms}")
+        best_res = results[0]
+        best_mass = best_res['mass']
         
+        print("\nComparison to Optimal Configuration (Rank 1 - Lightest):")
+        print(f"{'Rank':<5} {'N':<5} {'D(mm)':<8} {'t2(mm)':<10} {'t3(mm)':<10} {'Mass(kg)':<10} {'Diff(kg)':<12}")
+        print("-" * 80)
+        
+        for i, res in enumerate(results):
+            cfg = res['config']
+            diff_mass = res['mass'] - best_mass
+            
+            print(f"{i+1:<5} {cfg['N_min']:<5} {cfg['D_in']*1000:<8.1f} {cfg['t2']*1000:<10.4f} {cfg['t3']*1000:<10.4f} {res['mass']:<10.6f} {diff_mass:<+12.6f}")
+
+        print("\nTop 3 Configurations:")
+        for i, res in enumerate(results[:3]):
+            print(f"\nRank {i+1} (Score: {res['score']:.6f}):")
+            print(json.dumps(res['config'], indent=4))
+            
+            # Calculate final margins for verification
+            cfg = res['config']
+            NOF = Number_Of_Fasteners(w_original, cfg['D_2'], cfg['N_min'])
+            fasteners = Fasteners_location(NOF[0], NOF[1], NOF[2], NOF[3], h, t1, NOF[4])
+            
+            ms = calculate_margins([cfg['t2'], cfg['t3']], cfg['N_min'], cfg['D_2'], cfg['D_in'], cfg['D_fo'])
+            print(f"Minimum Margin of Safety: {ms}")
+            
+        plot_top_configurations(results[:3])
     else:
         print("No valid configuration found.")
 
