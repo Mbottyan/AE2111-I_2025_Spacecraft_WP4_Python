@@ -323,7 +323,6 @@ def thermal1():
 def mass_calculation_lug():
     Density = (Materials[material_used]['Density'])
     edge_spacing = Number_Of_Fasteners(w, D_2, 0)[1]
-    center_spacing = Number_Of_Fasteners(w, D_2, 0)[2]
     N_f = Number_Of_Fasteners(w, D_2, 0)[0]
     # lug
     Volume = ( h + 2*t1 + edge_spacing*4) * t2 * w
@@ -333,8 +332,6 @@ def mass_calculation_lug():
         Volume -= Area_br * t2
     Mass_lug = Volume * Density
     return Mass_lug
-    
-
 
 #                                                             #
 ##                                                           ##
@@ -402,7 +399,7 @@ delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2
 thermal1()
 
 #Final tabulation of results
-print("Weight of the lug:", mass_calculation_lug, "kg")
+print("Weight of the lug:", mass_calculation_lug(), "kg")
 print("\nFastener Safety Factors and Coordinates:")
 header = f"{'ID':<5} {'X (m)':<12} {'Z (m)':<12} {'MS Bear(t2)':<15} {'MS Bear(t2 Th)':<15} {'MS Pull(t2)':<15} {'MS Bear(t3 Th)':<15} {'MS Pull(t3)':<15}"
 print(header)
