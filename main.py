@@ -21,7 +21,7 @@ Fz = params['forces']['Fz'] #N
 Mx = params['forces']['Mx']  #Nm #88.2132 to -386.0275
 My = params['forces']['My'] #Nm   #plus or minus
 Mz = params['forces']['Mz'] #Nm     #plus or minus
-w = params['geometry']['w'] #m  (Put in the real value here)
+w = params['geometry']['w'] #m  0.003480227081946958
 h = params['geometry']['h'] #m  (Put in the real value here) !!!!!!!!!
 t1 = params['geometry']['t1'] #m  (Put in the real value here)
 t2 = params['geometry']['t2'] #m (Put in the real value here) !!!!!!!!!
@@ -336,7 +336,7 @@ def thermal1():
 #                                                             #
 
          #Generate fastener coordinates
-NOF=Number_Of_Fasteners(w,D_2,3)
+NOF=Number_Of_Fasteners(w,D_2,2)
 Fasteners_location(NOF[0],NOF[1],NOF[2],NOF[3],h,t1,NOF[4])
 fastener_zcoords=[]
 for fastn in Fasteners:
