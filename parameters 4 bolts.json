@@ -30,7 +30,8 @@
         "Carbon Composite": {
             "type (metal or composite)": 2,
             "Modulus": 230000000000,
-            "Yield Stress": 4400000000
+            "Yield Stress": 4400000000,
+            "Density": 1600
         },
         "Titanium": {
             "type (metal or composite)": 1,
