@@ -188,6 +188,5 @@ ax.set_xlim(w_dim_x - 0.01, xlim[1])
 ax.grid(True, linestyle=':', alpha=0.6)
 
 plt.tight_layout()
-plt.savefig('lug_plot.png')
-print("Plot saved to lug_plot.png")
+plt.show()
 
