@@ -335,17 +335,37 @@ def thermal1():
     return thermal_failure
 
 def mass_calculation_lug():
-    Density = (Materials[material_used]['Density'])
-    edge_spacing_2 = Number_Of_Fasteners(w, D_2, 0)[5]
-    N_f = Number_Of_Fasteners(w, D_2, 0)[0]
-    # lug
-    Volume = ( h + 2*t1 + edge_spacing_2*4) * t2 * w
-    Volume += w*t1*( (w + (math.pi)*(w*0.5)**2)/2 - (math.pi)*(D_1*0.5)**2) # adds the protuding parts with t1 and D_1
-    for i, item in enumerate(Fasteners):
-        Area_br = item.provide_x_weighted_average()[1]
-        Volume -= Area_br * t2
-    Mass_lug = Volume * Density
-    return Mass_lug
+    Density_Lug = (Materials[material_used]['Density'])
+    Density_Body = (Materials[material_used_body]['Density'])
+    Density_Fastener = (Materials[material_used_fastener]['Density'])
+    
+    # Use global NOF results calculated earlier
+    w_new = NOF[3]
+    edge_spacing_2 = NOF[5]
+    
+    # Area of the base plate (including flanges and central section)
+    Area_Base = (h + 2*t1 + 4*edge_spacing_2) * w_new
+    
+    # Area of fastener holes using D_in
+    Area_Holes = len(Fasteners) * math.pi * (D_in * 0.5)**2
+    
+    Area_Net = Area_Base - Area_Holes
+    
+    # Length assumed to be (t2 + t3) * factor for protruding parts (head, nut, etc.)
+    Bolt_Length_Factor = 1.25 
+    Volume_Bolts = Area_Holes * (t2 + t3) * Bolt_Length_Factor
+
+    # Mass of the lug plate (t2)
+    Mass_Lug_Plate = Area_Net * t2 * Density_Lug
+    
+    # Mass of the wall section (t3)
+    Mass_Wall_Section = Area_Net * t3 * Density_Body
+
+    # Mass of the fasteners
+    Mass_Bolts = Volume_Bolts * Density_Fastener
+    
+    Total_Mass = Mass_Lug_Plate + Mass_Wall_Section + Mass_Bolts
+    return Total_Mass
 
 #                                                             #
 ##                                                           ##
@@ -413,7 +433,7 @@ delta_b=Compliance_fastener(Materials[material_used]['Modulus'],(math.pi*(D_in/2
 thermal1()
 
 #Final tabulation of results
-print("Weight of the lug:", mass_calculation_lug(), "kg")
+print("\n----------- F I N A L D A T A -----------\nWeight of the assembly:", mass_calculation_lug(), "kg")
 print("\nFastener Safety Factors and Coordinates:")
 header = f"{'ID':<5} {'X (m)':<12} {'Z (m)':<12} {'MS Bear(t2)':<15} {'MS Bear(t2 Th)':<15} {'MS Pull(t2)':<15} {'MS Bear(t3 Th)':<15} {'MS Pull(t3)':<15}"
 print(header)
